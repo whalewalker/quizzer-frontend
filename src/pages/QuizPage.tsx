@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { quizService } from '../services/quiz.service';
 import type { Quiz, QuizGenerateRequest } from '../types';
-import { Brain, Plus, Sparkles, Target, CheckCircle } from 'lucide-react';
+import { Brain, Plus, Sparkles, Target, CheckCircle, X, History } from 'lucide-react';
 import { QuizGenerator } from '../components/QuizGenerator';
 import { QuizList } from '../components/QuizList';
+import { Modal } from '../components/Modal';
 
 export const QuizPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [showGenerator, setShowGenerator] = useState(false);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(false);
@@ -19,6 +21,7 @@ export const QuizPage = () => {
     sourceId?: string;
     sourceTitle?: string;
   } | undefined>(undefined);
+  const [deleteQuizId, setDeleteQuizId] = useState<string | null>(null);
 
   useEffect(() => {
     if (location.state) {
@@ -79,14 +82,16 @@ export const QuizPage = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) {
-      return;
-    }
+  const handleDelete = (id: string) => {
+    setDeleteQuizId(id);
+  };
+
+  const confirmDeleteQuiz = async () => {
+    if (!deleteQuizId) return;
 
     const loadingToast = toast.loading('Deleting quiz...');
     try {
-      await quizService.delete(id);
+      await quizService.delete(deleteQuizId);
       
       // Refresh the quiz list
       const allQuizzes = await quizService.getAll();
@@ -95,6 +100,8 @@ export const QuizPage = () => {
       toast.success('Quiz deleted successfully!', { id: loadingToast });
     } catch (error) {
       toast.error('Failed to delete quiz. Please try again.', { id: loadingToast });
+    } finally {
+      setDeleteQuizId(null);
     }
   };
 
@@ -126,61 +133,106 @@ export const QuizPage = () => {
               </h1>
               <p className="text-blue-100 dark:text-blue-200 text-lg">Create intelligent quizzes from any topic, content, or file</p>
             </div>
-            <button
-              onClick={() => setShowGenerator(!showGenerator)}
-              className="group flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-xl transition-all hover:scale-105 font-semibold shadow-lg"
-            >
-              <Plus className="w-5 h-5" />
-              {showGenerator ? 'Close Generator' : 'New Quiz'}
-            </button>
+            {!showGenerator && (
+              <button
+                onClick={() => setShowGenerator(true)}
+                className="group flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-xl transition-all hover:scale-105 font-semibold shadow-lg"
+              >
+                <Plus className="w-5 h-5" />
+                New Quiz
+              </button>
+            )}
           </div>
         </div>
       </header>
 
       {/* Stats Overview */}
       {totalQuizzes > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="card p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
-            <div className="flex items-center justify-between">
-              <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500">
-                <Brain className="w-6 h-6 text-white" />
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="card p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+              <div className="flex items-center justify-between">
+                <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500">
+                  <Brain className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalQuizzes}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Quizzes</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalQuizzes}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Quizzes</p>
+            </div>
+            <div className="card p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800">
+              <div className="flex items-center justify-between">
+                <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
+                  <Target className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalQuestions}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Questions Created</p>
+                </div>
+              </div>
+            </div>
+            <div className="card p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
+              <div className="flex items-center justify-between">
+                <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500">
+                  <CheckCircle className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{completedQuizzes}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Completed</p>
+                </div>
               </div>
             </div>
           </div>
-          <div className="card p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800">
-            <div className="flex items-center justify-between">
-              <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
-                <Target className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalQuestions}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Questions Created</p>
-              </div>
-            </div>
-          </div>
-          <div className="card p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
-            <div className="flex items-center justify-between">
-              <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500">
-                <CheckCircle className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{completedQuizzes}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Completed</p>
-              </div>
-            </div>
-          </div>
-        </div>
+          
+          {/* View All Attempts Button */}
+          <button
+            onClick={() => navigate('/attempts?type=quiz')}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300 font-medium"
+          >
+            <History className="w-5 h-5" />
+            View All Quiz Attempts
+          </button>
+        </>
       )}
 
       {showGenerator && (
-        <QuizGenerator onGenerate={handleGenerate} loading={loading} initialValues={initialValues} />
+        <div className="relative animate-in fade-in slide-in-from-top-4 duration-300">
+          <button 
+            onClick={() => setShowGenerator(false)}
+            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors z-10"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <QuizGenerator onGenerate={handleGenerate} loading={loading} initialValues={initialValues} />
+        </div>
       )}
 
       <QuizList quizzes={quizzes} onDelete={handleDelete} />
+
+      <Modal
+        isOpen={!!deleteQuizId}
+        onClose={() => setDeleteQuizId(null)}
+        title="Delete Quiz"
+        footer={
+          <>
+            <button
+              onClick={() => setDeleteQuizId(null)}
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDeleteQuiz}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Delete Quiz
+            </button>
+          </>
+        }
+      >
+        <p>Are you sure you want to delete this quiz? This action cannot be undone.</p>
+      </Modal>
     </div>
   );
 };

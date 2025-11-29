@@ -34,12 +34,12 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
             disabled={showResults}
             className={`w-full text-left p-5 rounded-xl border-2 transition-all duration-200 group ${
               isCorrect
-                ? 'border-green-500 bg-green-50'
+                ? 'border-green-500 bg-green-50 dark:bg-green-900/20 dark:border-green-600'
                 : isWrong
-                ? 'border-red-500 bg-red-50'
+                ? 'border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-600'
                 : isSelected
-                ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-md scale-[1.02]'
-                : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50 hover:shadow-sm'
+                ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 shadow-md scale-[1.02] dark:border-blue-400'
+                : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-sm bg-white dark:bg-gray-800'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -56,7 +56,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
               >
                 {option === 'True' ? 'T' : 'F'}
               </span>
-              <span className="text-base">{option}</span>
+              <span className="text-base text-gray-900 dark:text-white">{option}</span>
               {showResults && isCorrect && (
                 <span className="ml-auto text-green-700 font-semibold">✓ Correct</span>
               )}
@@ -84,12 +84,12 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
             disabled={showResults}
             className={`w-full text-left p-5 rounded-xl border-2 transition-all duration-200 group ${
               isCorrect
-                ? 'border-green-500 bg-green-50'
+                ? 'border-green-500 bg-green-50 dark:bg-green-900/20 dark:border-green-600'
                 : isWrong
-                ? 'border-red-500 bg-red-50'
+                ? 'border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-600'
                 : isSelected
-                ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-md scale-[1.02]'
-                : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50 hover:shadow-sm'
+                ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 shadow-md scale-[1.02] dark:border-blue-400'
+                : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-sm bg-white dark:bg-gray-800'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -106,7 +106,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
               >
                 {String.fromCharCode(65 + index)}
               </span>
-              <span className="text-base">{option}</span>
+              <span className="text-base text-gray-900 dark:text-white">{option}</span>
               {showResults && isCorrect && (
                 <span className="ml-auto text-green-700 font-semibold">✓ Correct</span>
               )}
@@ -135,7 +135,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
 
     return (
       <div className="space-y-3">
-        <p className="text-sm text-gray-600 mb-3 font-medium">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 font-medium">
           Select all that apply:
         </p>
         <div className="space-y-3">
@@ -153,14 +153,14 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                 disabled={showResults}
                 className={`w-full text-left p-5 rounded-xl border-2 transition-all duration-200 group ${
                   isCorrectlySelected
-                    ? 'border-green-500 bg-green-50'
+                    ? 'border-green-500 bg-green-50 dark:bg-green-900/20 dark:border-green-600'
                     : isWronglySelected
-                    ? 'border-red-500 bg-red-50'
+                    ? 'border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-600'
                     : isMissed
-                    ? 'border-orange-500 bg-orange-50'
+                    ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-600'
                     : isSelected
-                    ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-md'
-                    : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50 hover:shadow-sm'
+                    ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 shadow-md dark:border-blue-400'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-sm bg-white dark:bg-gray-800'
                 }`}
               >
                 <div className="flex items-center gap-4">
@@ -179,7 +179,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                   >
                     {(isSelected || isMissed) && '✓'}
                   </span>
-                  <span className="text-base">{option}</span>
+                  <span className="text-base text-gray-900 dark:text-white">{option}</span>
                   {isMissed && (
                     <span className="ml-auto text-orange-700 font-semibold">⚠ Missed</span>
                   )}
@@ -234,7 +234,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
           <div className="space-y-3">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-1 h-6 bg-blue-600 rounded-full"></div>
-              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Items to Match</h3>
+              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Items to Match</h3>
             </div>
             {leftItems.map((leftItem, index) => {
               const userMatch = currentMatches[leftItem];
@@ -260,14 +260,14 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                   disabled={showResults}
                   className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${
                     isCorrect
-                      ? 'border-green-500 bg-green-50 shadow-md'
+                      ? 'border-green-500 bg-green-50 dark:bg-green-900/20 shadow-md dark:border-green-600'
                       : isWrong
-                      ? 'border-red-500 bg-red-50 shadow-md'
+                      ? 'border-red-500 bg-red-50 dark:bg-red-900/20 shadow-md dark:border-red-600'
                       : isSelected
-                      ? 'border-blue-500 bg-blue-100 shadow-lg scale-[1.02] ring-2 ring-blue-300'
+                      ? 'border-blue-500 bg-blue-100 dark:bg-blue-900/30 shadow-lg scale-[1.02] ring-2 ring-blue-300 dark:ring-blue-600 dark:border-blue-400'
                       : userMatch
-                      ? 'border-blue-400 bg-blue-50 shadow-sm hover:shadow-md cursor-pointer'
-                      : 'border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50 hover:shadow-sm cursor-pointer'
+                      ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20 shadow-sm hover:shadow-md cursor-pointer dark:border-blue-500'
+                      : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700 hover:shadow-sm cursor-pointer'
                   } ${showResults ? 'cursor-default' : ''}`}
                 >
                   <div className="flex items-start gap-3">
@@ -285,7 +285,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                       {index + 1}
                     </div>
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-900 mb-1">{leftItem}</div>
+                      <div className="font-semibold text-gray-900 dark:text-white mb-1">{leftItem}</div>
                       {userMatch && (
                         <div className="flex items-center gap-2 mt-2 text-sm">
                           <span className={`font-medium px-2 py-1 rounded ${
@@ -333,7 +333,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
           <div className="space-y-3">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-1 h-6 bg-indigo-600 rounded-full"></div>
-              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Possible Matches</h3>
+              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Possible Matches</h3>
             </div>
             {rightItems.map((rightItem, idx) => {
               const isUsed = Object.values(currentMatches).includes(rightItem);
@@ -351,10 +351,10 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                   disabled={showResults || isUsed || !selectedLeft}
                   className={`w-full p-4 rounded-xl border-2 text-left transition-all duration-200 ${
                     canSelect
-                      ? 'border-indigo-400 bg-gradient-to-br from-white to-indigo-50 hover:border-indigo-600 hover:shadow-lg hover:scale-[1.02] cursor-pointer'
+                      ? 'border-indigo-400 bg-gradient-to-br from-white to-indigo-50 dark:from-gray-800 dark:to-indigo-900/20 hover:border-indigo-600 dark:hover:border-indigo-500 hover:shadow-lg hover:scale-[1.02] cursor-pointer dark:border-indigo-500'
                       : isUsed
-                      ? 'border-gray-300 bg-gray-100 text-gray-400 opacity-60 cursor-not-allowed'
-                      : 'border-gray-300 bg-gray-50 text-gray-500 cursor-not-allowed'
+                      ? 'border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 opacity-60 cursor-not-allowed'
+                      : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                   } ${showResults ? 'cursor-default' : ''}`}
                 >
                   <div className="flex items-start gap-3">
@@ -368,7 +368,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                       {String.fromCharCode(65 + idx)}
                     </div>
                     <div className="flex-1">
-                      <div className={`font-semibold ${isUsed ? 'text-gray-400' : 'text-gray-900'}`}>
+                      <div className={`font-semibold ${isUsed ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-white'}`}>
                         {rightItem}
                       </div>
                       {isUsed && (
@@ -405,9 +405,9 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
           className={`p-4 rounded-lg ${
             showResults && hasCorrectAnswer
               ? isCorrect
-                ? 'bg-green-50'
-                : 'bg-red-50'
-              : 'bg-white'
+                ? 'bg-green-50 dark:bg-green-900/20'
+                : 'bg-red-50 dark:bg-red-900/20'
+              : 'bg-white dark:bg-gray-800'
           }`}
         >
           <input
@@ -416,7 +416,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
             onChange={(e) => !showResults && onAnswerSelect(e.target.value)}
             disabled={showResults}
             placeholder="Type your answer here..."
-            className="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-0 disabled:bg-gray-100 text-base"
+            className="w-full p-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-0 disabled:bg-gray-100 dark:disabled:bg-gray-700 text-base bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           />
         </div>
         {showResults && hasCorrectAnswer && (
@@ -441,7 +441,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
           {questionIndex + 1}
         </div>
         <div className="flex-1">
-          <h2 className="text-2xl font-semibold text-gray-900">
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
             {question.question}
           </h2>
         </div>

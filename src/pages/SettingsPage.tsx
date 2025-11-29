@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { userService } from '../services';
 import { User, Lock, Settings as SettingsIcon, AlertTriangle, Save } from 'lucide-react';
+import { Modal } from '../components/Modal';
 
 type TabType = 'account' | 'security' | 'preferences' | 'danger';
 
@@ -33,6 +34,7 @@ export const SettingsPage = () => {
 
   // Delete confirmation
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -123,16 +125,15 @@ export const SettingsPage = () => {
     }
   };
 
-  const handleDeleteAccount = async () => {
+  const handleDeleteAccountClick = () => {
     if (deleteConfirmation !== 'DELETE') {
       toast.error('Please type DELETE to confirm');
       return;
     }
+    setIsDeleteModalOpen(true);
+  };
 
-    if (!window.confirm('Are you absolutely sure? This action cannot be undone.')) {
-      return;
-    }
-
+  const confirmDeleteAccount = async () => {
     setLoading(true);
 
     try {
@@ -144,6 +145,8 @@ export const SettingsPage = () => {
       console.error('Error deleting account:', error);
       toast.error('Failed to delete account');
       setLoading(false);
+    } finally {
+      setIsDeleteModalOpen(false);
     }
   };
 
@@ -443,7 +446,7 @@ export const SettingsPage = () => {
                 </div>
 
                 <button
-                  onClick={handleDeleteAccount}
+                  onClick={handleDeleteAccountClick}
                   disabled={loading || deleteConfirmation !== 'DELETE'}
                   className="px-6 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white rounded-lg transition-colors"
                 >
@@ -454,6 +457,31 @@ export const SettingsPage = () => {
           </div>
         )}
       </div>
+
+
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Delete Account"
+        footer={
+          <>
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDeleteAccount}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              {loading ? 'Deleting...' : 'Yes, Delete My Account'}
+            </button>
+          </>
+        }
+      >
+        <p>Are you absolutely sure? This action cannot be undone.</p>
+      </Modal>
     </div>
   );
 };

@@ -118,6 +118,18 @@ export const attemptService = {
     );
     return response.data;
   },
+
+  getByQuizId: async (quizId: string): Promise<Attempt[]> => {
+    const response = await apiClient.get<Attempt[]>(`/attempts/quiz/${quizId}`);
+    return response.data;
+  },
+
+  getByFlashcardId: async (flashcardId: string): Promise<Attempt[]> => {
+    const response = await apiClient.get<Attempt[]>(
+      `/attempts/flashcard/${flashcardId}`
+    );
+    return response.data;
+  },
 };
 
 export { gamificationService } from "./gamification.service";

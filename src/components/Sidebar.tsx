@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Home, BookOpen, Layers, Trophy, BarChart3, LogOut, ChevronLeft, ChevronRight, Medal, User, Settings, Brain
+  Home, BookOpen, Layers, Trophy, BarChart3, LogOut, ChevronLeft, ChevronRight, Medal, User, Settings, Brain, Calendar
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -23,9 +23,29 @@ export const Sidebar = ({ isCollapsed, toggleCollapse, isOpen, closeMobile }: Si
     { path: '/challenges', icon: Trophy, label: 'Challenges' },
     { path: '/leaderboard', icon: Medal, label: 'Leaderboard' },
     { path: '/statistics', icon: BarChart3, label: 'Analytics' },
+    { path: '/attempts', icon: Calendar, label: 'Attempts' },
     { path: '/profile', icon: User, label: 'Profile' },
     { path: '/settings', icon: Settings, label: 'Settings' },
   ];
+
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+
+  let filteredNavItems = [...navItems];
+
+  if (isAdmin) {
+    // For admins, show only Admin Dashboard, Users, Content, Profile, and Settings
+    filteredNavItems = [
+      { path: '/admin', icon: Home, label: 'Dashboard' },
+      { path: '/admin/users', icon: User, label: 'Users' },
+      { path: '/admin/content', icon: Layers, label: 'Content' },
+      { path: '/profile', icon: User, label: 'Profile' },
+      { path: '/settings', icon: Settings, label: 'Settings' },
+    ];
+  } else {
+    // For regular users, show standard navigation
+    filteredNavItems = navItems;
+  }
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -66,7 +86,7 @@ export const Sidebar = ({ isCollapsed, toggleCollapse, isOpen, closeMobile }: Si
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
             

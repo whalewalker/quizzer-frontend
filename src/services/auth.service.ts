@@ -1,6 +1,8 @@
 import { apiClient } from "./api";
 import { AUTH_ENDPOINTS } from "../config/api";
 import type { AuthResponse, User } from "../types";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "../config/firebase.config";
 
 export const authService = {
   // Email/password login
@@ -26,6 +28,28 @@ export const authService = {
       schoolName,
     });
     return response.data;
+  },
+
+  // Google Sign-In
+  googleSignIn: async (): Promise<AuthResponse> => {
+    try {
+      // Sign in with Google using Firebase
+      const result = await signInWithPopup(auth, googleProvider);
+
+      // Get the ID token
+      const idToken = await result.user.getIdToken();
+
+      // Send the token to backend for verification
+      const response = await apiClient.post<AuthResponse>(
+        AUTH_ENDPOINTS.GOOGLE_LOGIN,
+        { idToken }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      console.error("Google sign-in error:", error);
+      throw error;
+    }
   },
 
   // Get current user

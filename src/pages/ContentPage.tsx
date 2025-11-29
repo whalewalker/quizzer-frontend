@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { BookOpen, Highlighter, MessageSquare, Brain, ArrowLeft, Loader2, StickyNote, Trash2, Calendar, Check, Edit3, Save, X } from 'lucide-react';
+import { BookOpen, Highlighter, MessageSquare, Brain, ArrowLeft, Loader2, StickyNote, Trash2, Calendar, Check, Edit3, Save } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -11,6 +11,8 @@ import { flashcardService } from '../services/flashcard.service';
 import { quizService } from '../services/quiz.service';
 import { contentService, type Content } from '../services/content.service';
 import toast from 'react-hot-toast';
+import { Modal } from '../components/Modal';
+import { InlineNoteInput } from '../components/InlineNoteInput';
 import './ContentPage.css';
 
 interface Highlight {
@@ -26,27 +28,15 @@ interface ExtendedContent extends Content {
 }
 
 const HIGHLIGHT_COLORS = {
-  yellow: 'bg-yellow-200',
-  green: 'bg-green-200',
-  pink: 'bg-pink-200'
+  yellow: 'bg-yellow-200 dark:bg-yellow-900/50',
+  green: 'bg-green-200 dark:bg-green-900/50',
+  pink: 'bg-pink-200 dark:bg-pink-900/50'
 };
 
 const HIGHLIGHT_BORDER_COLORS = {
-  yellow: 'border-yellow-400',
-  green: 'border-green-400',
-  pink: 'border-pink-400'
-};
-
-const DARK_HIGHLIGHT_COLORS = {
-  yellow: 'dark:bg-yellow-900/50 dark:text-yellow-100',
-  green: 'dark:bg-green-900/50 dark:text-green-100',
-  pink: 'dark:bg-pink-900/50 dark:text-pink-100'
-};
-
-const DARK_HIGHLIGHT_BORDER_COLORS = {
-  yellow: 'dark:border-yellow-700',
-  green: 'dark:border-green-700',
-  pink: 'dark:border-pink-700'
+  yellow: 'border-yellow-400 dark:border-yellow-700',
+  green: 'border-green-400 dark:border-green-700',
+  pink: 'border-pink-400 dark:border-pink-700'
 };
 
 export const ContentPage = () => {
@@ -65,6 +55,13 @@ export const ContentPage = () => {
   const [editedTitle, setEditedTitle] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Inline Note States
+  const [inlineNote, setInlineNote] = useState<{ id?: string; text: string; position: { x: number; y: number } } | null>(null);
+  
+  // Modal states
+  const [deleteHighlightId, setDeleteHighlightId] = useState<string | null>(null);
+  const [isDeleteContentModalOpen, setIsDeleteContentModalOpen] = useState(false);
 
   const fetchContent = async () => {
     if (!id) return;
@@ -95,17 +92,21 @@ export const ContentPage = () => {
           x: rect.left + rect.width / 2,
           y: rect.top - 10 + window.scrollY
         });
+        // Close inline note input if open
+        if (inlineNote && !inlineNote.id) {
+          setInlineNote(null);
+        }
       }
     };
 
     document.addEventListener('mouseup', handleSelection);
     return () => document.removeEventListener('mouseup', handleSelection);
-  }, []);
+  }, [inlineNote]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (!target.closest('.floating-toolbar') && window.getSelection()?.toString().length === 0) {
+      if (!target.closest('.floating-toolbar') && !target.closest('.inline-note-input') && window.getSelection()?.toString().length === 0) {
         setToolbarPosition(null);
       }
     };
@@ -187,18 +188,24 @@ export const ContentPage = () => {
     }
   };
 
-  const handleAddNote = async () => {
-    if (!selectedText || !id) return;
-    
-    const note = prompt('Enter your note:');
-    if (!note) return;
+  const handleAddNote = () => {
+    if (!selectedText || !id || !toolbarPosition) return;
+    setInlineNote({
+      text: '',
+      position: toolbarPosition
+    });
+    setToolbarPosition(null);
+  };
+
+  const saveInlineNote = async () => {
+    if (!inlineNote?.text || !id) return;
 
     try {
       await contentService.addHighlight(id, {
         text: selectedText,
         startOffset: 0,
         endOffset: 0,
-        note: note,
+        note: inlineNote.text,
         color: 'yellow'
       });
       toast.success('Note added');
@@ -207,28 +214,32 @@ export const ContentPage = () => {
       console.error('Failed to add note:', error);
       toast.error('Failed to add note');
     } finally {
-      setToolbarPosition(null);
+      setInlineNote(null);
       window.getSelection()?.removeAllRanges();
     }
   };
 
-  const handleDeleteHighlight = async (highlightId: string) => {
-    if (!confirm('Are you sure you want to delete this highlight?')) return;
+  const handleDeleteHighlight = (highlightId: string) => {
+    setDeleteHighlightId(highlightId);
+  };
+
+  const confirmDeleteHighlight = async () => {
+    if (!deleteHighlightId) return;
     try {
-      await contentService.deleteHighlight(highlightId);
+      await contentService.deleteHighlight(deleteHighlightId);
       toast.success('Highlight removed');
       fetchContent();
     } catch (error) {
       console.error('Failed to delete highlight:', error);
       toast.error('Failed to delete highlight');
+    } finally {
+      setDeleteHighlightId(null);
     }
   };
 
   const handleGenerateQuiz = () => {
     if (!content) return;
     
-    // Truncate content if it's too long (e.g., > 5000 chars) to prevent token limits
-    // This is a simple truncation, ideally we'd want to be smarter about it
     const maxContentLength = 5000;
     const contentText = content.content.length > maxContentLength 
       ? content.content.substring(0, maxContentLength) + '...'
@@ -249,7 +260,7 @@ export const ContentPage = () => {
     setEditedTitle(content.title);
     setEditedContent(content.content);
     setIsEditing(true);
-    setToolbarPosition(null); // Hide highlight toolbar
+    setToolbarPosition(null);
   };
 
   const handleCancelEdit = () => {
@@ -273,7 +284,7 @@ export const ContentPage = () => {
       
       toast.success('Content updated successfully!', { id: loadingToast });
       setIsEditing(false);
-      fetchContent(); // Refresh content
+      fetchContent();
     } catch (error) {
       console.error('Failed to save content:', error);
       toast.error('Failed to save changes', { id: loadingToast });
@@ -282,13 +293,13 @@ export const ContentPage = () => {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
+    setIsDeleteContentModalOpen(true);
+  };
+
+  const confirmDeleteContent = async () => {
     if (!id) return;
     
-    if (!confirm('Are you sure you want to delete this content? This action cannot be undone.')) {
-      return;
-    }
-
     const loadingToast = toast.loading('Deleting content...');
     try {
       await contentService.delete(id);
@@ -297,6 +308,8 @@ export const ContentPage = () => {
     } catch (error) {
       console.error('Failed to delete content:', error);
       toast.error('Failed to delete content', { id: loadingToast });
+    } finally {
+      setIsDeleteContentModalOpen(false);
     }
   };
 
@@ -305,13 +318,11 @@ export const ContentPage = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isEditing) return;
       
-      // Ctrl+S or Cmd+S to save
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
       }
       
-      // Esc to cancel
       if (e.key === 'Escape') {
         e.preventDefault();
         handleCancelEdit();
@@ -335,13 +346,15 @@ export const ContentPage = () => {
       const regex = new RegExp(escapedText, 'g');
       
       const colorKey = highlight.color as keyof typeof HIGHLIGHT_COLORS;
-      const lightClass = HIGHLIGHT_COLORS[colorKey] || 'bg-yellow-200';
-      const darkClass = DARK_HIGHLIGHT_COLORS[colorKey] || '';
-      const combinedClass = `${lightClass} ${darkClass}`.trim();
+      const colorClass = HIGHLIGHT_COLORS[colorKey] || 'bg-yellow-200 dark:bg-yellow-900/50';
       
       processed = processed.replace(regex, (match) => {
         const placeholder = `__HL_${replacements.size}__`;
-        replacements.set(placeholder, `<mark class="${combinedClass}">${match}</mark>`);
+        const noteIndicator = highlight.note 
+          ? `<span class="note-indicator inline-flex items-center justify-center w-4 h-4 ml-1 text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-full align-top cursor-pointer transition-colors" data-note-id="${highlight.id}" data-note-text="${highlight.note.replace(/"/g, '&quot;')}" title="Click to view note">!</span>` 
+          : '';
+        
+        replacements.set(placeholder, `<mark class="${colorClass} rounded px-0.5" data-highlight-id="${highlight.id}">${match}${noteIndicator}</mark>`);
         return placeholder;
       });
     });
@@ -353,11 +366,45 @@ export const ContentPage = () => {
     return processed;
   };
 
-  // Process content to inject highlights
   const processedContent = useMemo(() => {
     if (!content?.content) return '';
     return applyHighlights(content.content, content.highlights || []);
   }, [content]);
+
+  // Handle note indicator clicks
+  useEffect(() => {
+    const handleNoteClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.classList.contains('note-indicator')) {
+        const noteText = target.getAttribute('data-note-text');
+        const noteId = target.getAttribute('data-note-id');
+        if (noteText) {
+          // Show note in a tooltip or modal
+          const rect = target.getBoundingClientRect();
+          setInlineNote({
+            id: noteId || undefined,
+            text: noteText,
+            position: { x: rect.left + rect.width / 2, y: rect.top - 10 + window.scrollY }
+          });
+        }
+      }
+    };
+
+    const contentElement = contentRef.current;
+    if (contentElement) {
+      contentElement.addEventListener('click', handleNoteClick);
+      return () => contentElement.removeEventListener('click', handleNoteClick);
+    }
+  }, [content]);
+
+
+  // Custom heading renderer to add IDs
+  const HeadingRenderer = ({ level, children }: any) => {
+    const text = children?.[0]?.toString() || '';
+    const id = text.toLowerCase().replace(/[^\w]+/g, '-');
+    const Tag = `h${level}` as React.ElementType;
+    return <Tag id={id}>{children}</Tag>;
+  };
 
   if (loading) {
     return (
@@ -379,246 +426,234 @@ export const ContentPage = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto pb-20 px-4 flex gap-8">
-      {/* Main Content */}
-      <div className="flex-1 min-w-0">
-        <div className="mb-8">
-          <Link to="/study" className="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-4 transition-colors">
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back to Study
-          </Link>
-          <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="max-w-[1600px] mx-auto pb-20 px-4 sm:px-6 lg:px-8">
+      {/* Header */}
+      <div className="mb-8 sticky top-0 z-50 bg-white dark:bg-gray-900 pt-4 pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto">
+          <div className="flex items-center gap-4">
+            <Link to="/study" className="p-2 -ml-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-semibold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/30 px-3 py-1 rounded-full border border-primary-100 dark:border-primary-800 uppercase tracking-wide">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-semibold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/30 px-2 py-0.5 rounded text-nowrap">
                   {content.topic}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  {format(new Date(content.createdAt), 'MMM d, yyyy · h:mm a')}
+                  {format(new Date(content.createdAt), 'MMM d')}
                 </span>
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white leading-tight">{content.title}</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate max-w-md">{content.title}</h1>
             </div>
-            <div className="flex gap-3">
-              {!isEditing && (
+          </div>
+
+          <div className="flex items-center gap-2">
+             {!isEditing ? (
                 <>
                   <button 
-                    onClick={() => setShowNotes(!showNotes)}
-                    className={`btn-secondary flex items-center gap-2 ${showNotes ? 'bg-gray-100 dark:bg-gray-700 ring-2 ring-gray-200 dark:ring-gray-600' : ''}`}
-                  >
-                    <StickyNote className="w-4 h-4" />
-                    {showNotes ? 'Hide Notes' : 'Show Notes'}
-                  </button>
-                  <button 
-                    onClick={handleEdit}
-                    className="btn-secondary flex items-center gap-2"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                    Edit
-                  </button>
-                  <button 
-                    onClick={handleDelete}
-                    className="btn-secondary flex items-center gap-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 dark:border-red-900"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </button>
-                  <button 
                     onClick={handleGenerateQuiz}
-                    className="btn-primary flex items-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
+                    className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-sm text-sm font-medium"
                   >
                     <Brain className="w-4 h-4" />
                     Generate Quiz
                   </button>
+                  <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1 hidden sm:block"></div>
+                  <button 
+                    onClick={handleEdit}
+                    className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    title="Edit Content"
+                  >
+                    <Edit3 className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={() => setShowNotes(!showNotes)}
+                    className={`p-2 rounded-lg transition-colors ${showNotes ? 'text-primary-600 bg-primary-50 dark:text-primary-400 dark:bg-primary-900/20' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                    title="Toggle Notes"
+                  >
+                    <StickyNote className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={handleDelete}
+                    className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    title="Delete Content"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
                 </>
-              )}
-              {isEditing && (
+              ) : (
                 <>
                   <button 
                     onClick={handleCancelEdit}
-                    className="btn-secondary flex items-center gap-2"
+                    className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-sm font-medium"
                     disabled={isSaving}
                   >
-                    <X className="w-4 h-4" />
                     Cancel
                   </button>
                   <button 
                     onClick={handleSave}
-                    className="btn-primary flex items-center gap-2"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-sm text-sm font-medium"
                     disabled={isSaving}
                   >
                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    {isSaving ? 'Saving...' : 'Save'}
+                    Save Changes
                   </button>
                 </>
               )}
-            </div>
           </div>
-        </div>
-
-        <div ref={contentRef} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 md:p-12 min-h-[500px]">
-          {isEditing ? (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
-                <input
-                  type="text"
-                  value={editedTitle}
-                  onChange={(e) => setEditedTitle(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Content title"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Content (Markdown)</label>
-                <textarea
-                  ref={textareaRef}
-                  value={editedContent}
-                  onChange={(e) => setEditedContent(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm min-h-[400px] resize-y"
-                  placeholder="Write your content in markdown..."
-                />
-              </div>
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Preview</h4>
-                <div className="prose prose-sm max-w-none bg-white dark:bg-gray-800 rounded p-4 border border-gray-200 dark:border-gray-700">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {editedContent || '*No content to preview*'}
-                  </ReactMarkdown>
-                </div>
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
-                <p className="font-semibold mb-1">💡 Markdown Tips:</p>
-                <ul className="space-y-0.5 ml-4">
-                  <li>**bold** for <strong>bold text</strong></li>
-                  <li>*italic* for <em>italic text</em></li>
-                  <li># Heading for headers</li>
-                  <li>- item for bullet lists</li>
-                  <li>```code``` for code blocks</li>
-                  <li>Keyboard shortcuts: Ctrl+S to save, Esc to cancel</li>
-                </ul>
-              </div>
-            </div>
-          ) : (
-            <div className="prose prose-lg max-w-none content-markdown font-sans">
-              <ReactMarkdown 
-                remarkPlugins={[remarkGfm]} 
-                rehypePlugins={[
-                  rehypeRaw,
-                  [rehypeSanitize, {
-                    ...defaultSchema,
-                    tagNames: [...(defaultSchema.tagNames || []), 'mark'],
-                    attributes: {
-                      ...defaultSchema.attributes,
-                      mark: [['className', /^bg-(yellow|green|pink)-200.*$/]]
-                    }
-                  }]
-                ]}
-                components={{
-                  mark: (props) => <mark {...props} />,
-                }}
-              >
-                {processedContent}
-              </ReactMarkdown>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Notes Sidebar */}
-      {showNotes && (
-        <div className="w-80 flex-shrink-0 hidden xl:block animate-in slide-in-from-right duration-300">
-          <div className="sticky top-24 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 h-[calc(100vh-120px)] overflow-y-auto flex flex-col">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2 text-lg">
-                <StickyNote className="w-5 h-5 text-primary-600" />
-                Notes & Highlights
-              </h3>
-              <span className="text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
-                {content.highlights?.length || 0}
-              </span>
-            </div>
-
-            <div className="space-y-4 flex-1">
-              {content.highlights && content.highlights.length > 0 ? (
-                content.highlights.map((highlight) => (
-                  <div 
-                    key={highlight.id} 
-                    className={`p-4 rounded-xl border transition-all hover:shadow-md group ${
-                      HIGHLIGHT_COLORS[highlight.color as keyof typeof HIGHLIGHT_COLORS] || 'bg-yellow-50'
-                    } ${
-                      HIGHLIGHT_BORDER_COLORS[highlight.color as keyof typeof HIGHLIGHT_BORDER_COLORS] || 'border-yellow-200'
-                    } ${
-                      DARK_HIGHLIGHT_COLORS[highlight.color as keyof typeof DARK_HIGHLIGHT_COLORS] || 'dark:bg-yellow-900/30'
-                    } ${
-                      DARK_HIGHLIGHT_BORDER_COLORS[highlight.color as keyof typeof DARK_HIGHLIGHT_BORDER_COLORS] || 'dark:border-yellow-700'
-                    } bg-opacity-30 dark:bg-opacity-30`}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <span className={`text-xs font-bold uppercase tracking-wider opacity-70 dark:text-gray-300`}>
-                        {highlight.note ? 'Note' : 'Highlight'}
-                      </span>
-                      <button 
-                        onClick={() => handleDeleteHighlight(highlight.id)}
-                        className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                    <p className="text-sm text-gray-800 dark:text-gray-200 italic mb-3 pl-3 border-l-2 border-black/10 dark:border-white/10 leading-relaxed">
-                      "{highlight.text}"
-                    </p>
-                    {highlight.note && (
-                      <div className="text-sm text-gray-800 dark:text-gray-200 mt-3 pt-3 border-t border-black/5 dark:border-white/5 font-medium">
-                        <p>{highlight.note}</p>
-                      </div>
-                    )}
-                    <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {format(new Date(highlight.createdAt), 'MMM d')}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-12 text-gray-400 dark:text-gray-500 flex flex-col items-center justify-center h-full">
-                  <div className="w-16 h-16 bg-gray-50 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-                    <Highlighter className="w-8 h-8 opacity-20 dark:text-gray-300" />
-                  </div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">No highlights yet</p>
-                  <p className="text-xs mt-1 max-w-[150px] dark:text-gray-400">Select text in the content to add highlights or notes.</p>
+      <div className="flex gap-8 max-w-7xl mx-auto">
+        {/* Main Content */}
+        <div className="flex-1 min-w-0">
+          <div ref={contentRef} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 md:p-12 min-h-[500px]">
+            {isEditing ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
+                  <input
+                    type="text"
+                    value={editedTitle}
+                    onChange={(e) => setEditedTitle(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Content title"
+                  />
                 </div>
-              )}
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Content (Markdown)</label>
+                  <textarea
+                    ref={textareaRef}
+                    value={editedContent}
+                    onChange={(e) => setEditedContent(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm min-h-[400px] resize-y"
+                    placeholder="Write your content in markdown..."
+                  />
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Preview</h4>
+                  <div className="prose prose-sm max-w-none bg-white dark:bg-gray-800 rounded p-4 border border-gray-200 dark:border-gray-700">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {editedContent || '*No content to preview*'}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="prose prose-lg max-w-none content-markdown font-sans dark:prose-invert">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]} 
+                  rehypePlugins={[
+                    rehypeRaw,
+                    [rehypeSanitize, {
+                      ...defaultSchema,
+                      tagNames: [...(defaultSchema.tagNames || []), 'mark', 'span'],
+                      attributes: {
+                        ...defaultSchema.attributes,
+                        mark: [['className'], ['data-highlight-id']],
+                        span: [['className'], ['title']]
+                      }
+                    }]
+                  ]}
+                  components={{
+                    h1: (props) => <HeadingRenderer level={1} {...props} />,
+                    h2: (props) => <HeadingRenderer level={2} {...props} />,
+                    h3: (props) => <HeadingRenderer level={3} {...props} />,
+                  }}
+                >
+                  {processedContent}
+                </ReactMarkdown>
+              </div>
+            )}
           </div>
         </div>
-      )}
 
-      {/* Floating Toolbar - only show when not editing */}
+        {/* Notes Sidebar */}
+        {showNotes && !isEditing && (
+          <div className="w-80 flex-shrink-0 hidden xl:block">
+            <div className="sticky top-24 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 max-h-[calc(100vh-120px)] overflow-y-auto flex flex-col">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2 text-lg">
+                  <StickyNote className="w-5 h-5 text-primary-600" />
+                  Notes & Highlights
+                </h3>
+                <span className="text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
+                  {content.highlights?.length || 0}
+                </span>
+              </div>
+
+              <div className="space-y-4 flex-1">
+                {content.highlights && content.highlights.length > 0 ? (
+                  content.highlights.map((highlight) => (
+                    <div 
+                      key={highlight.id} 
+                      className={`p-4 rounded-xl border transition-all hover:shadow-md group relative ${
+                        HIGHLIGHT_BORDER_COLORS[highlight.color as keyof typeof HIGHLIGHT_BORDER_COLORS]
+                      } bg-white dark:bg-gray-800`}
+                    >
+                      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${
+                        highlight.color === 'yellow' ? 'bg-yellow-400' : 
+                        highlight.color === 'green' ? 'bg-green-400' : 'bg-pink-400'
+                      }`}></div>
+                      
+                      <div className="flex justify-between items-start mb-2 pl-2">
+                        <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          {highlight.note ? 'Note' : 'Highlight'}
+                        </span>
+                        <button 
+                          onClick={() => handleDeleteHighlight(highlight.id)}
+                          className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      
+                      <p className="text-sm text-gray-800 dark:text-gray-200 italic mb-2 pl-2">
+                        "{highlight.text}"
+                      </p>
+                      
+                      {highlight.note && (
+                        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 pl-2">
+                          <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">{highlight.note}</p>
+                        </div>
+                      )}
+                      
+                      <div className="mt-2 text-xs text-gray-400 pl-2">
+                        {format(new Date(highlight.createdAt), 'MMM d, h:mm a')}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-12 text-gray-400 dark:text-gray-500">
+                    <Highlighter className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                    <p className="text-sm">No highlights yet</p>
+                    <p className="text-xs mt-1 opacity-70">Select text to add highlights</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Floating Toolbar */}
       {!isEditing && toolbarPosition && (
         <div
           className="floating-toolbar fixed z-50 bg-gray-900 text-white rounded-xl shadow-2xl flex items-center p-1.5 transform -translate-x-1/2 -translate-y-full animate-in fade-in zoom-in duration-200"
           style={{ left: toolbarPosition.x, top: toolbarPosition.y }}
         >
           <div className="flex items-center gap-1 pr-2 border-r border-gray-700 mr-2">
-            <button 
-              onClick={() => setSelectedColor('yellow')}
-              className={`w-6 h-6 rounded-full bg-yellow-400 hover:scale-110 transition-transform flex items-center justify-center ${selectedColor === 'yellow' ? 'ring-2 ring-white' : ''}`}
-            >
-              {selectedColor === 'yellow' && <Check className="w-3 h-3 text-yellow-900" />}
-            </button>
-            <button 
-              onClick={() => setSelectedColor('green')}
-              className={`w-6 h-6 rounded-full bg-green-400 hover:scale-110 transition-transform flex items-center justify-center ${selectedColor === 'green' ? 'ring-2 ring-white' : ''}`}
-            >
-              {selectedColor === 'green' && <Check className="w-3 h-3 text-green-900" />}
-            </button>
-            <button 
-              onClick={() => setSelectedColor('pink')}
-              className={`w-6 h-6 rounded-full bg-pink-400 hover:scale-110 transition-transform flex items-center justify-center ${selectedColor === 'pink' ? 'ring-2 ring-white' : ''}`}
-            >
-              {selectedColor === 'pink' && <Check className="w-3 h-3 text-pink-900" />}
-            </button>
+            {(['yellow', 'green', 'pink'] as const).map((color) => (
+              <button 
+                key={color}
+                onClick={() => setSelectedColor(color)}
+                className={`w-6 h-6 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${
+                  color === 'yellow' ? 'bg-yellow-400' : color === 'green' ? 'bg-green-400' : 'bg-pink-400'
+                } ${selectedColor === color ? 'ring-2 ring-white' : ''}`}
+              >
+                {selectedColor === color && <Check className="w-3 h-3 text-black/50" />}
+              </button>
+            ))}
           </div>
 
           <button onClick={() => handleHighlight()} className="p-2 hover:bg-gray-700 rounded-lg transition-colors flex flex-col items-center gap-0.5 min-w-[3rem]" title="Highlight">
@@ -651,6 +686,68 @@ export const ContentPage = () => {
           )}
         </div>
       )}
+
+      {/* Inline Note Input */}
+      {inlineNote && (
+        <div className="inline-note-input">
+          <InlineNoteInput
+            value={inlineNote.text}
+            onChange={(text) => setInlineNote({ ...inlineNote, text })}
+            onSave={saveInlineNote}
+            onCancel={() => setInlineNote(null)}
+            position={inlineNote.position}
+          />
+        </div>
+      )}
+
+      {/* Modals */}
+      <Modal
+        isOpen={!!deleteHighlightId}
+        onClose={() => setDeleteHighlightId(null)}
+        title="Delete Highlight"
+        footer={
+          <>
+            <button
+              onClick={() => setDeleteHighlightId(null)}
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDeleteHighlight}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Delete
+            </button>
+          </>
+        }
+      >
+        <p>Are you sure you want to delete this highlight?</p>
+      </Modal>
+
+      <Modal
+        isOpen={isDeleteContentModalOpen}
+        onClose={() => setIsDeleteContentModalOpen(false)}
+        title="Delete Content"
+        footer={
+          <>
+            <button
+              onClick={() => setIsDeleteContentModalOpen(false)}
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDeleteContent}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Delete Content
+            </button>
+          </>
+        }
+      >
+        <p>Are you sure you want to delete this content? This action cannot be undone.</p>
+      </Modal>
     </div>
   );
 };

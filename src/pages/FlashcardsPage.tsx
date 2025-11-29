@@ -2,14 +2,16 @@ import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { flashcardService } from '../services/flashcard.service';
 import type { FlashcardSet, FlashcardGenerateRequest } from '../types';
-import { CreditCard, Plus, Sparkles, Layers, BookOpen } from 'lucide-react';
+import { CreditCard, Plus, Sparkles, Layers, BookOpen, X } from 'lucide-react';
 import { FlashcardGenerator } from '../components/FlashcardGenerator';
 import { FlashcardSetList } from '../components/FlashcardSetList';
+import { Modal } from '../components/Modal';
 
 export const FlashcardsPage = () => {
   const [showGenerator, setShowGenerator] = useState(false);
   const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);
   const [loading, setLoading] = useState(false);
+  const [deleteSetId, setDeleteSetId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadFlashcardSets = async () => {
@@ -48,14 +50,16 @@ export const FlashcardsPage = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this flashcard set? This action cannot be undone.')) {
-      return;
-    }
+  const handleDelete = (id: string) => {
+    setDeleteSetId(id);
+  };
+
+  const confirmDeleteSet = async () => {
+    if (!deleteSetId) return;
 
     const loadingToast = toast.loading('Deleting flashcard set...');
     try {
-      await flashcardService.delete(id);
+      await flashcardService.delete(deleteSetId);
       
       // Refresh the flashcard list
       const sets = await flashcardService.getAll();
@@ -64,6 +68,8 @@ export const FlashcardsPage = () => {
       toast.success('Flashcard set deleted successfully!', { id: loadingToast });
     } catch (error) {
       toast.error('Failed to delete flashcard set. Please try again.', { id: loadingToast });
+    } finally {
+      setDeleteSetId(null);
     }
   };
 
@@ -95,13 +101,15 @@ export const FlashcardsPage = () => {
               </h1>
               <p className="text-emerald-100 dark:text-emerald-200 text-lg">Transform any content into effective study flashcards</p>
             </div>
-            <button
-              onClick={() => setShowGenerator(!showGenerator)}
-              className="group flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 rounded-xl transition-all hover:scale-105 font-semibold shadow-lg"
-            >
-              <Plus className="w-5 h-5" />
-              {showGenerator ? 'Close Generator' : 'New Set'}
-            </button>
+            {!showGenerator && (
+              <button
+                onClick={() => setShowGenerator(true)}
+                className="group flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 rounded-xl transition-all hover:scale-105 font-semibold shadow-lg"
+              >
+                <Plus className="w-5 h-5" />
+                New Set
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -146,10 +154,42 @@ export const FlashcardsPage = () => {
       )}
 
       {showGenerator && (
-        <FlashcardGenerator onGenerate={handleGenerate} loading={loading} />
+        <div className="relative animate-in fade-in slide-in-from-top-4 duration-300">
+          <button 
+            onClick={() => setShowGenerator(false)}
+            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors z-10"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <FlashcardGenerator onGenerate={handleGenerate} loading={loading} />
+        </div>
       )}
 
       <FlashcardSetList sets={flashcardSets} onDelete={handleDelete} />
+
+      <Modal
+        isOpen={!!deleteSetId}
+        onClose={() => setDeleteSetId(null)}
+        title="Delete Flashcard Set"
+        footer={
+          <>
+            <button
+              onClick={() => setDeleteSetId(null)}
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDeleteSet}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Delete Set
+            </button>
+          </>
+        }
+      >
+        <p>Are you sure you want to delete this flashcard set? This action cannot be undone.</p>
+      </Modal>
     </div>
   );
 };

@@ -3,10 +3,11 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  avatar?: string;
+  role: "USER" | "ADMIN" | "SUPER_ADMIN";
   schoolName?: string;
   grade?: string;
   preferences?: Record<string, any>;
-  avatar?: string;
   createdAt: string;
 }
 
@@ -224,5 +225,16 @@ export interface Attempt {
   flashcardSetId?: string;
   type: "quiz" | "flashcard";
   score?: number;
+  totalQuestions?: number;
   completedAt: string;
+  quiz?: {
+    id: string;
+    title: string;
+    topic: string;
+  };
+  flashcardSet?: {
+    id: string;
+    title: string;
+    topic: string;
+  };
 }

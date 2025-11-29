@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BarChart3, TrendingUp, Clock, Flame, BookOpen, Layers } from 'lucide-react';
+import { BarChart3, TrendingUp, Clock, Flame, BookOpen, Layers, ArrowRight } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 import { format, formatDistanceToNow } from 'date-fns';
 import { statisticsService } from '../services/statistics.service';
@@ -297,8 +297,17 @@ export const StatisticsPage = () => {
       <div className="card dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">Recent Attempts</h2>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Page {page} of {totalPages}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/attempts')}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+            >
+              View All Attempts
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Page {page} of {totalPages}
+            </div>
           </div>
         </div>
         
@@ -326,7 +335,8 @@ export const StatisticsPage = () => {
                     <tr 
                       key={attempt.id} 
                       onClick={() => handleAttemptClick(attempt)}
-                      className="border-b border-gray-100 dark:border-gray-700 hover:bg-primary-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                      className="border-b border-gray-100 dark:border-gray-700 hover:bg-primary-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors group"
+                      title="Click to view details"
                     >
                       <td className="py-3 px-4">
                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
@@ -338,7 +348,7 @@ export const StatisticsPage = () => {
                           {attempt.type}
                         </span>
                       </td>
-                      <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">
+                      <td className="py-3 px-4 font-medium text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                         {attempt.quiz?.title || attempt.flashcardSet?.title || 'Untitled'}
                       </td>
                       <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
