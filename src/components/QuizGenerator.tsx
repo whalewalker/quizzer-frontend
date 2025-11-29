@@ -1,16 +1,23 @@
 import { useState, useRef } from 'react';
 import type { QuizGenerateRequest, QuizType, QuestionType } from '../types';
-import { Brain, Sparkles } from 'lucide-react';
+import { Brain, Sparkles, BookOpen } from 'lucide-react';
 
 interface QuizGeneratorProps {
   onGenerate: (request: QuizGenerateRequest, files?: File[]) => void;
   loading: boolean;
+  initialValues?: {
+    topic?: string;
+    content?: string;
+    mode?: 'topic' | 'content' | 'files';
+    sourceId?: string;
+    sourceTitle?: string;
+  };
 }
 
-export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loading }) => {
-  const [mode, setMode] = useState<'topic' | 'content' | 'files'>('topic');
-  const [topic, setTopic] = useState('');
-  const [content, setContent] = useState('');
+export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loading, initialValues }) => {
+  const [mode, setMode] = useState<'topic' | 'content' | 'files'>(initialValues?.mode || 'topic');
+  const [topic, setTopic] = useState(initialValues?.topic || '');
+  const [content, setContent] = useState(initialValues?.content || '');
   const [files, setFiles] = useState<File[]>([]);
   const [numberOfQuestions, setNumberOfQuestions] = useState(5);
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
@@ -96,22 +103,30 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
   };
 
   return (
-    <div className="card border border-primary-200 shadow-sm">
+    <div className="card border border-primary-200 dark:border-gray-700 shadow-sm dark:bg-gray-800">
       <div className="flex items-center gap-3 mb-6">
         <div className="p-2 bg-primary-100 rounded-lg">
           <Brain className="w-6 h-6 text-primary-600" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900">Generate New Quiz</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Generate New Quiz</h2>
       </div>
 
-      <div className="flex gap-2 mb-6 border-b border-gray-200">
+      {initialValues?.sourceTitle && (
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-lg flex items-center gap-2 text-blue-800">
+          <BookOpen className="w-5 h-5" />
+          <span className="font-medium">Generating from content:</span>
+          <span className="font-bold">{initialValues.sourceTitle}</span>
+        </div>
+      )}
+
+      <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
         <button
           type="button"
           onClick={() => setMode('topic')}
           className={`px-6 py-3 font-semibold transition-all rounded-t-lg ${
             mode === 'topic'
-              ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-400'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
           }`}
         >
           From Topic
@@ -121,8 +136,8 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
           onClick={() => setMode('content')}
           className={`px-6 py-3 font-semibold transition-all rounded-t-lg ${
             mode === 'content'
-              ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-400'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
           }`}
         >
           From Content
@@ -132,8 +147,8 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
           onClick={() => setMode('files')}
           className={`px-6 py-3 font-semibold transition-all rounded-t-lg ${
             mode === 'files'
-              ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-400'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
           }`}
         >
           From Files
@@ -143,7 +158,7 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
       <form onSubmit={handleSubmit} className="space-y-4">
         {mode === 'topic' && (
           <div>
-            <label htmlFor="topic" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="topic" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Topic
             </label>
             <input
@@ -160,7 +175,7 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
 
         {mode === 'content' && (
           <div>
-            <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Content
             </label>
             <textarea
@@ -171,7 +186,7 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
               className="input-field min-h-[200px] resize-y"
               required
             />
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               AI will analyze your content and generate relevant questions
             </p>
           </div>
@@ -179,7 +194,7 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
 
         {mode === 'files' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Upload Files
             </label>
             
@@ -191,8 +206,8 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
                 isDragging
-                  ? 'border-primary-500 bg-primary-50'
-                  : 'border-gray-300 hover:border-primary-400 hover:bg-gray-50'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
               }`}
             >
               <svg
@@ -210,10 +225,10 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
                 />
               </svg>
               <div className="mt-4">
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
                   Drop files here or click to browse
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   PDF, TXT, MD files (max 10MB each, up to 5 files)
                 </p>
               </div>
@@ -231,13 +246,13 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
             {/* File List */}
             {files.length > 0 && (
               <div className="mt-4 space-y-2">
-                <p className="text-sm font-medium text-gray-700">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Selected files ({files.length})
                 </p>
                 {files.map((file, index) => (
                   <div
                     key={`${file.name}-${index}`}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600"
                   >
                     <div className="flex items-center space-x-3 flex-1 min-w-0">
                       <div className="flex-shrink-0">
@@ -252,10 +267,10 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-200 truncate">
                           {file.name}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {formatFileSize(file.size)}
                         </p>
                       </div>
@@ -277,7 +292,7 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
         )}
 
         <div>
-          <label htmlFor="questions" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="questions" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Number of Questions: {numberOfQuestions}
           </label>
           <input
@@ -296,7 +311,7 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Difficulty</label>
           <div className="flex gap-3">
             {(['easy', 'medium', 'hard'] as const).map((level) => (
               <button
@@ -305,8 +320,8 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
                 onClick={() => setDifficulty(level)}
                 className={`flex-1 py-2 px-4 rounded-lg border-2 transition-colors ${
                   difficulty === level
-                    ? 'border-primary-600 bg-primary-50 text-primary-700 font-medium'
-                    : 'border-gray-300 hover:border-gray-400'
+                    ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium'
+                    : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300'
                 }`}
               >
                 {level.charAt(0).toUpperCase() + level.slice(1)}
@@ -316,7 +331,7 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Quiz Type</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quiz Type</label>
           <div className="flex gap-3">
             {(['standard', 'timed', 'scenario'] as const).map((type) => (
               <button
@@ -325,8 +340,8 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
                 onClick={() => setQuizType(type)}
                 className={`flex-1 py-2 px-4 rounded-lg border-2 transition-colors ${
                   quizType === type
-                    ? 'border-blue-600 bg-blue-50 text-blue-700 font-medium'
-                    : 'border-gray-300 hover:border-gray-400'
+                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-medium'
+                    : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300'
                 }`}
               >
                 {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -342,7 +357,7 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
 
         {quizType === 'timed' && (
           <div>
-            <label htmlFor="timeLimit" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="timeLimit" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Time Limit: {Math.floor(timeLimit / 60)}:{(timeLimit % 60).toString().padStart(2, '0')}
             </label>
             <input
@@ -363,7 +378,7 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
             Question Types
           </label>
           <div className="grid grid-cols-2 gap-3">
@@ -374,8 +389,8 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
                 onClick={() => toggleQuestionType(type)}
                 className={`py-2 px-4 rounded-lg border-2 text-sm transition-colors ${
                   selectedQuestionTypes.includes(type)
-                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700 font-medium'
-                    : 'border-gray-300 hover:border-gray-400 text-gray-700'
+                    ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 font-medium'
+                    : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300'
                 }`}
               >
                 {questionTypeLabels[type]}

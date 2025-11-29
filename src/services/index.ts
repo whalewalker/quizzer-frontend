@@ -123,3 +123,5 @@ export const attemptService = {
 export { gamificationService } from "./gamification.service";
 export { contentService } from "./content.service";
 export { userService } from "./user.service";
+export * from "./task.service";
+export * from "./notification.service";

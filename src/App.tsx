@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
 import { LoginPage } from './pages/LoginPage';
@@ -31,44 +33,67 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  useEffect(() => {
+    // Placeholder for FCM token registration
+    // In a real app, you would initialize Firebase here and get the token
+    const registerNotifications = async () => {
+      try {
+        if ('Notification' in window && Notification.permission === 'default') {
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            console.log('Notification permission granted');
+            // const token = await getToken(messaging, { vapidKey: 'YOUR_VAPID_KEY' });
+            // await notificationService.registerToken(token);
+          }
+        }
+      } catch (error) {
+        console.error('Error requesting notification permission:', error);
+      }
+    };
+
+    registerNotifications();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Layout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="study" element={<StudyPage />} />
-              <Route path="discover" element={<DiscoverPage />} />
-              <Route path="content/generate" element={<ContentPage />} />
-              <Route path="content/:id" element={<ContentPage />} />
-              <Route path="quiz" element={<QuizPage />} />
-              <Route path="quiz/:id" element={<QuizTakePage />} />
-              <Route path="flashcards" element={<FlashcardsPage />} />
-              <Route path="flashcards/:id" element={<FlashcardStudyPage />} />
-              <Route path="leaderboard" element={<LeaderboardPage />} />
-              <Route path="challenges" element={<ChallengesPage />} />
-              <Route path="statistics" element={<StatisticsPage />} />
-              <Route path="profile" element={<ProfilePage />} />
-              <Route path="settings" element={<SettingsPage />} />
-            </Route>
+      <ThemeProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Layout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="study" element={<StudyPage />} />
+                <Route path="discover" element={<DiscoverPage />} />
+                <Route path="content/generate" element={<ContentPage />} />
+                <Route path="content/:id" element={<ContentPage />} />
+                <Route path="quiz" element={<QuizPage />} />
+                <Route path="quiz/:id" element={<QuizTakePage />} />
+                <Route path="flashcards" element={<FlashcardsPage />} />
+                <Route path="flashcards/:id" element={<FlashcardStudyPage />} />
+                <Route path="leaderboard" element={<LeaderboardPage />} />
+                <Route path="challenges" element={<ChallengesPage />} />
+                <Route path="statistics" element={<StatisticsPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="settings" element={<SettingsPage />} />
+              </Route>
 
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-          <Toaster position="top-right" />
-        </BrowserRouter>
-      </AuthProvider>
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+            <Toaster position="top-right" />
+          </BrowserRouter>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

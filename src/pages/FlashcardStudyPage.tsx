@@ -135,8 +135,8 @@ export const FlashcardStudyPage = () => {
 
   if (!flashcardSet?.cards?.length) {
     return (
-      <div className="card text-center py-12">
-        <h3 className="text-xl font-semibold text-gray-600 mb-2">
+      <div className="card text-center py-12 dark:bg-gray-800">
+        <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
           No flashcards found
         </h3>
         <button onClick={() => navigate('/flashcards')} className="btn-primary mt-4">
@@ -159,7 +159,7 @@ export const FlashcardStudyPage = () => {
   if (showResults) {
     return (
       <div className="max-w-3xl mx-auto space-y-6 pb-8">
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 p-8 shadow-lg text-center">
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 dark:from-emerald-800 dark:via-teal-800 dark:to-cyan-900 p-8 shadow-lg text-center">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-white rounded-full"></div>
             <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white rounded-full"></div>
@@ -175,7 +175,7 @@ export const FlashcardStudyPage = () => {
               <div className="bg-white/20 backdrop-blur-sm rounded-full px-6 py-3 border-2 border-white/30">
                 <div className="flex flex-col items-center gap-1">
                   <div className="text-5xl font-bold text-white">{totalScore}</div>
-                  <div className="text-sm text-emerald-100 font-medium">Total Score</div>
+                  <div className="text-sm text-emerald-100 dark:text-emerald-200 font-medium">Total Score</div>
                 </div>
               </div>
             </div>
@@ -184,17 +184,17 @@ export const FlashcardStudyPage = () => {
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
                 <div className="text-3xl mb-2">👍🏼</div>
                 <div className="text-2xl font-bold text-white">{knowCount}</div>
-                <div className="text-sm text-emerald-100">Knew It</div>
+                <div className="text-sm text-emerald-100 dark:text-emerald-200">Knew It</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
                 <div className="text-3xl mb-2">👎🏼</div>
                 <div className="text-2xl font-bold text-white">{dontKnowCount}</div>
-                <div className="text-sm text-emerald-100">Didn't Know</div>
+                <div className="text-sm text-emerald-100 dark:text-emerald-200">Didn't Know</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
                 <div className="text-3xl mb-2">⏭️</div>
                 <div className="text-2xl font-bold text-white">{skippedCount}</div>
-                <div className="text-sm text-emerald-100">Skipped</div>
+                <div className="text-sm text-emerald-100 dark:text-emerald-200">Skipped</div>
               </div>
             </div>
           </div>
@@ -226,7 +226,7 @@ export const FlashcardStudyPage = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-8">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-xl bg-primary-600 p-6 shadow-lg">
+      <div className="relative overflow-hidden rounded-xl bg-primary-600 dark:bg-primary-900 p-6 shadow-lg">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white rounded-full"></div>
           <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white rounded-full"></div>
@@ -252,7 +252,7 @@ export const FlashcardStudyPage = () => {
             </div>
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-white mb-2">{flashcardSet.title}</h1>
-              <p className="text-primary-100">{flashcardSet.topic}</p>
+              <p className="text-primary-100 dark:text-primary-200">{flashcardSet.topic}</p>
             </div>
           </div>
           
@@ -273,7 +273,7 @@ export const FlashcardStudyPage = () => {
       </div>
 
       {/* Flashcard */}
-      <div className="card border border-primary-200 shadow-xl" style={{ perspective: '1000px' }}>
+      <div className="card border border-primary-200 dark:border-gray-700 shadow-xl dark:bg-gray-800" style={{ perspective: '1000px' }}>
         <div
           className="min-h-[450px] relative rounded-xl"
           style={{
@@ -301,7 +301,7 @@ export const FlashcardStudyPage = () => {
 
           {/* Front of card */}
           <div
-            className="flex flex-col items-center justify-center min-h-[450px] text-center px-8 py-12 bg-primary-50 rounded-xl"
+            className="flex flex-col items-center justify-center min-h-[450px] text-center px-8 py-12 bg-primary-50 dark:bg-gray-700 rounded-xl"
             style={{
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
@@ -313,14 +313,14 @@ export const FlashcardStudyPage = () => {
               <BookOpen className="w-8 h-8 text-white" />
             </div>
             <p 
-              className="text-3xl font-bold text-gray-900 mb-6 leading-relaxed"
+              className="text-3xl font-bold text-gray-900 dark:text-white mb-6 leading-relaxed"
               dangerouslySetInnerHTML={renderMarkdown(currentCard.front)}
             />
           </div>
 
           {/* Back of card */}
           <div
-            className="flex flex-col items-center justify-center min-h-[450px] text-center px-8 py-12 bg-primary-50 rounded-xl"
+            className="flex flex-col items-center justify-center min-h-[450px] text-center px-8 py-12 bg-primary-50 dark:bg-gray-700 rounded-xl"
             style={{
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
@@ -334,19 +334,19 @@ export const FlashcardStudyPage = () => {
               <Sparkles className="w-8 h-8 text-white" />
             </div>
             <p 
-              className="text-2xl font-semibold text-gray-900 mb-6 leading-relaxed max-w-2xl"
+              className="text-2xl font-semibold text-gray-900 dark:text-white mb-6 leading-relaxed max-w-2xl"
               dangerouslySetInnerHTML={renderMarkdown(currentCard.back)}
             />
             {currentCard.explanation && (
-              <div className="mt-6 pt-6 border-t-2 border-primary-200 max-w-2xl">
+              <div className="mt-6 pt-6 border-t-2 border-primary-200 dark:border-gray-600 max-w-2xl">
                 <div className="inline-flex items-center gap-2 mb-3">
                   <span className="text-2xl">💡</span>
-                  <p className="text-sm font-bold text-primary-900 uppercase tracking-wide">
+                  <p className="text-sm font-bold text-primary-900 dark:text-primary-300 uppercase tracking-wide">
                     Explanation
                   </p>
                 </div>
                 <p 
-                  className="text-base text-gray-700 leading-relaxed bg-white p-4 rounded-lg"
+                  className="text-base text-gray-700 dark:text-gray-300 leading-relaxed bg-white dark:bg-gray-800 p-4 rounded-lg"
                   dangerouslySetInnerHTML={renderMarkdown(currentCard.explanation)}
                 />
               </div>
@@ -355,13 +355,13 @@ export const FlashcardStudyPage = () => {
         </div>
 
         {/* Navigation */}
-        <div className="space-y-4 mt-6 pt-6 border-t border-gray-200">
+        <div className="space-y-4 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
           {/* Response buttons - always visible */}
           <div className="flex items-center justify-center gap-4 pb-4">
             <button
               onClick={() => handleResponse('dont-know')}
               disabled={submitting}
-              className="group relative flex items-center justify-center gap-3 px-8 py-4 bg-red-50 hover:bg-red-100 border-2 border-red-300 hover:border-red-400 rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md"
+              className="group relative flex items-center justify-center gap-3 px-8 py-4 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 border-2 border-red-300 dark:border-red-700 hover:border-red-400 dark:hover:border-red-600 rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md"
             >
               <span className="text-3xl group-hover:scale-110 group-active:scale-95 transition-transform duration-200">👎🏼</span>
             </button>
@@ -369,7 +369,7 @@ export const FlashcardStudyPage = () => {
             <button
               onClick={() => handleResponse('know')}
               disabled={submitting}
-              className="group relative flex items-center justify-center gap-3 px-8 py-4 bg-green-50 hover:bg-green-100 border-2 border-green-300 hover:border-green-400 rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md"
+              className="group relative flex items-center justify-center gap-3 px-8 py-4 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 border-2 border-green-300 dark:border-green-700 hover:border-green-400 dark:hover:border-green-600 rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md"
             >
               <span className="text-3xl group-hover:scale-110 group-active:scale-95 transition-transform duration-200">👍🏼</span>
             </button>
@@ -379,7 +379,7 @@ export const FlashcardStudyPage = () => {
             <button
               onClick={handlePrevious}
               disabled={currentCardIndex === 0}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-5 h-5" />
               Previous
@@ -396,7 +396,7 @@ export const FlashcardStudyPage = () => {
             <button
               onClick={handleNext}
               disabled={currentCardIndex === flashcardSet.cards.length - 1 && !cardResponses.some(r => r.cardIndex === currentCardIndex)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {currentCardIndex === flashcardSet.cards.length - 1 ? 'Finish' : 'Next'}
               <ChevronRight className="w-5 h-5" />
@@ -406,13 +406,13 @@ export const FlashcardStudyPage = () => {
       </div>
 
       {/* Card List */}
-      <div className="card">
+      <div className="card dark:bg-gray-800">
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-lg">
-            <Layers className="w-5 h-5 text-emerald-600" />
+          <div className="p-2 bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-lg">
+            <Layers className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900">All Cards</h3>
-          <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">All Cards</h3>
+          <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full text-sm font-semibold">
             {flashcardSet.cards.length}
           </span>
         </div>
@@ -428,19 +428,19 @@ export const FlashcardStudyPage = () => {
                 }}
                 className={`text-left p-4 rounded-xl border-2 transition-all duration-200 group ${
                   index === currentCardIndex
-                    ? 'border-emerald-500 bg-gradient-to-r from-emerald-50 to-teal-50 shadow-md'
-                    : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50 hover:shadow-sm'
+                    ? 'border-emerald-500 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 shadow-md'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-sm'
                 }`}
               >
                 <div className="flex items-start gap-3">
                   <span className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
                     index === currentCardIndex
                       ? 'bg-emerald-500 text-white'
-                      : 'bg-gray-100 text-gray-600 group-hover:bg-emerald-100 group-hover:text-emerald-700'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30 group-hover:text-emerald-700 dark:group-hover:text-emerald-300'
                   }`}>
                     {index + 1}
                   </span>
-                  <p className="text-sm font-medium text-gray-800 line-clamp-2 flex-1">
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 line-clamp-2 flex-1">
                     {card.front}
                   </p>
                 </div>

@@ -20,18 +20,28 @@ export interface GenerateFromTopicDto {
   topic: string;
 }
 
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const cache = new Map<string, { data: unknown; timestamp: number }>();
+
+const clearCache = () => {
+  cache.clear();
+};
+
 export const contentService = {
-  async generateFromTopic(topic: string): Promise<Content> {
+  async generateFromTopic(topic: string): Promise<{ taskId: string }> {
+    clearCache();
     const response = await apiClient.post("/content/generate", { topic });
     return response.data;
   },
 
   async createFromText(data: CreateContentDto): Promise<Content> {
+    clearCache();
     const response = await apiClient.post("/content", data);
     return response.data;
   },
 
   async createFromFile(file: File): Promise<Content> {
+    clearCache();
     const formData = new FormData();
     formData.append("file", file);
 
@@ -43,9 +53,37 @@ export const contentService = {
     return response.data;
   },
 
-  async getAll(topic?: string): Promise<Content[]> {
-    const params = topic ? { topic } : {};
+  async getAll(
+    topic?: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{
+    data: Content[];
+    meta: { total: number; page: number; limit: number; totalPages: number };
+  }> {
+    const cacheKey = `content-${topic || "all"}-${page}-${limit}`;
+    const cached = cache.get(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return cached.data as {
+        data: Content[];
+        meta: {
+          total: number;
+          page: number;
+          limit: number;
+          totalPages: number;
+        };
+      };
+    }
+
+    const params = {
+      ...(topic ? { topic } : {}),
+      page,
+      limit,
+    };
     const response = await apiClient.get("/content", { params });
+
+    cache.set(cacheKey, { data: response.data, timestamp: Date.now() });
     return response.data;
   },
 
@@ -55,11 +93,13 @@ export const contentService = {
   },
 
   async update(id: string, data: Partial<CreateContentDto>): Promise<Content> {
+    clearCache();
     const response = await apiClient.put(`/content/${id}`, data);
     return response.data;
   },
 
   async delete(id: string): Promise<void> {
+    clearCache();
     await apiClient.delete(`/content/${id}`);
   },
 
@@ -72,7 +112,7 @@ export const contentService = {
       endOffset: number;
       note?: string;
     }
-  ): Promise<any> {
+  ): Promise<unknown> {
     const response = await apiClient.post(
       `/content/${contentId}/highlights`,
       data
@@ -82,5 +122,10 @@ export const contentService = {
 
   async deleteHighlight(highlightId: string): Promise<void> {
     await apiClient.delete(`/content/highlights/${highlightId}`);
+  },
+
+  async getPopularTopics(): Promise<string[]> {
+    const response = await apiClient.get("/content/popular-topics");
+    return response.data;
   },
 };

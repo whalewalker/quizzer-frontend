@@ -51,7 +51,7 @@ export const DashboardPage = () => {
   return (
     <div className="space-y-6 pb-8">
       {/* Hero Header */}
-      <header className="relative overflow-hidden rounded-xl bg-primary-600 p-6 md:p-8 shadow-lg">
+      <header className="relative overflow-hidden rounded-xl bg-primary-600 dark:bg-primary-900 p-6 md:p-8 shadow-lg">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white rounded-full"></div>
           <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white rounded-full"></div>
@@ -64,7 +64,7 @@ export const DashboardPage = () => {
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
             Hello, {user?.name || 'Learner'}! 👋
           </h1>
-          <p className="text-primary-100 text-lg">
+          <p className="text-primary-100 dark:text-primary-200 text-lg">
             Create content, take quizzes, or study flashcards to level up your knowledge
           </p>
         </div>
@@ -74,45 +74,45 @@ export const DashboardPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link
           to="/quiz"
-          className="card hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-primary-300"
+          className="card hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-primary-300 dark:hover:border-primary-700 dark:bg-gray-800"
         >
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Brain className="w-6 h-6 text-blue-600" />
+            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <Brain className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">Create Quiz</h3>
-              <p className="text-sm text-gray-600">Generate AI-powered quizzes</p>
+              <h3 className="font-bold text-gray-900 dark:text-white">Create Quiz</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Generate AI-powered quizzes</p>
             </div>
           </div>
         </Link>
 
         <Link
           to="/flashcards"
-          className="card hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-primary-300"
+          className="card hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-primary-300 dark:hover:border-primary-700 dark:bg-gray-800"
         >
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <Layers className="w-6 h-6 text-purple-600" />
+            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+              <Layers className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">Create Flashcards</h3>
-              <p className="text-sm text-gray-600">Build flashcard sets</p>
+              <h3 className="font-bold text-gray-900 dark:text-white">Create Flashcards</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Build flashcard sets</p>
             </div>
           </div>
         </Link>
 
         <Link
           to="/challenges"
-          className="card hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-primary-300"
+          className="card hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-primary-300 dark:hover:border-primary-700 dark:bg-gray-800"
         >
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-orange-100 rounded-lg">
-              <Trophy className="w-6 h-6 text-orange-600" />
+            <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+              <Trophy className="w-6 h-6 text-orange-600 dark:text-orange-400" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">Join Challenges</h3>
-              <p className="text-sm text-gray-600">Compete with others</p>
+              <h3 className="font-bold text-gray-900 dark:text-white">Join Challenges</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Compete with others</p>
             </div>
           </div>
         </Link>
@@ -123,7 +123,7 @@ export const DashboardPage = () => {
         to="/study"
         className="block group"
       >
-        <div className="card bg-gradient-to-br from-primary-600 via-primary-700 to-blue-700 border-0 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 cursor-pointer">
+        <div className="card bg-gradient-to-br from-primary-600 via-primary-700 to-blue-700 dark:from-primary-800 dark:via-primary-900 dark:to-blue-900 border-0 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 cursor-pointer">
           <div className="relative overflow-hidden">
             <div className="absolute inset-0 opacity-10">
               <div className="absolute -top-10 -right-10 w-40 h-40 bg-white rounded-full blur-2xl"></div>
@@ -137,7 +137,7 @@ export const DashboardPage = () => {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-1">Ready to Study?</h2>
-                  <p className="text-primary-100 text-base">Create AI-powered study materials from topics, text, or files</p>
+                  <p className="text-primary-100 dark:text-primary-200 text-base">Create AI-powered study materials from topics, text, or files</p>
                 </div>
               </div>
               
@@ -152,38 +152,38 @@ export const DashboardPage = () => {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="card bg-primary-50 border border-primary-200">
+        <div className="card bg-primary-50 dark:bg-gray-800 border border-primary-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-primary-500 rounded-lg">
               <Brain className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total Content</p>
-              <p className="text-2xl font-bold text-gray-900">0</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Content</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">0</p>
             </div>
           </div>
         </div>
 
-        <div className="card bg-green-50 border border-green-200">
+        <div className="card bg-green-50 dark:bg-gray-800 border border-green-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-green-500 rounded-lg">
               <TrendingUp className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">This Week</p>
-              <p className="text-2xl font-bold text-gray-900">0</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">This Week</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">0</p>
             </div>
           </div>
         </div>
 
-        <div className="card bg-yellow-50 border border-yellow-200">
+        <div className="card bg-yellow-50 dark:bg-gray-800 border border-yellow-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-yellow-500 rounded-lg">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Popular Topic</p>
-              <p className="text-lg font-bold text-gray-900">-</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Popular Topic</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">-</p>
             </div>
           </div>
         </div>
@@ -195,19 +195,19 @@ export const DashboardPage = () => {
         <div className="card">
           <div className="flex items-center gap-3 mb-4">
             <Flame className="w-6 h-6 text-orange-500" />
-            <h2 className="text-xl font-bold text-gray-900">Your Progress</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Your Progress</h2>
           </div>
           
           {streak && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Current Streak</p>
-                  <p className="text-3xl font-bold text-orange-600">{streak.currentStreak} days</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Current Streak</p>
+                  <p className="text-3xl font-bold text-orange-600 dark:text-orange-500">{streak.currentStreak} days</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-600">Longest Streak</p>
-                  <p className="text-2xl font-bold text-gray-900">{streak.longestStreak} days</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Longest Streak</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{streak.longestStreak} days</p>
                 </div>
               </div>
               
@@ -221,26 +221,26 @@ export const DashboardPage = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <Trophy className="w-6 h-6 text-yellow-500" />
-              <h2 className="text-xl font-bold text-gray-900">Leaderboard</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Leaderboard</h2>
             </div>
-            <Link to="/leaderboard" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+            <Link to="/leaderboard" className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
               View All
             </Link>
           </div>
           
           <div className="space-y-2">
             {leaderboard.map((entry, index) => (
-              <div key={entry.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
+              <div key={entry.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 <div className="flex-shrink-0 w-8 text-center">
                   {index === 0 && <Crown className="w-5 h-5 text-yellow-500 mx-auto" />}
                   {index === 1 && <Medal className="w-5 h-5 text-gray-400 mx-auto" />}
                   {index === 2 && <Medal className="w-5 h-5 text-orange-600 mx-auto" />}
-                  {index > 2 && <span className="text-sm font-semibold text-gray-500">#{index + 1}</span>}
+                  {index > 2 && <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">#{index + 1}</span>}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{entry.userName || entry.user?.name}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{entry.userName || entry.user?.name}</p>
                 </div>
-                <div className="flex items-center gap-1 text-primary-600">
+                <div className="flex items-center gap-1 text-primary-600 dark:text-primary-400">
                   <Star className="w-4 h-4" />
                   <span className="text-sm font-semibold">{entry.score}</span>
                 </div>
@@ -255,23 +255,23 @@ export const DashboardPage = () => {
         <div className="card">
           <div className="flex items-center gap-3 mb-4">
             <TrendingUp className="w-6 h-6 text-green-500" />
-            <h2 className="text-xl font-bold text-gray-900">Recommended for You</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Recommended for You</h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {recommendations.map((rec, index) => (
-              <div key={rec.topic + index} className="p-4 bg-gradient-to-br from-primary-50 to-blue-50 rounded-lg border border-primary-200">
+              <div key={rec.topic + index} className="p-4 bg-gradient-to-br from-primary-50 to-blue-50 dark:from-gray-800 dark:to-gray-800 rounded-lg border border-primary-200 dark:border-gray-700">
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-gray-900">{rec.topic}</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">{rec.topic}</h3>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    rec.priority === 'high' ? 'bg-red-100 text-red-700' :
-                    rec.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-green-100 text-green-700'
+                    rec.priority === 'high' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
+                    rec.priority === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
+                    'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                   }`}>
                     {rec.priority}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600">{rec.reason}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{rec.reason}</p>
               </div>
             ))}
           </div>

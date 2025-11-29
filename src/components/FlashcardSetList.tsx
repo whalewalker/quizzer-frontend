@@ -1,12 +1,21 @@
 import { Link } from 'react-router-dom';
 import type { FlashcardSet } from '../types';
-import { Calendar, CreditCard, Layers, Play, BookOpen, CheckCircle2 } from 'lucide-react';
+import { Calendar, CreditCard, Layers, Play, BookOpen, CheckCircle2, Trash2 } from 'lucide-react';
 
 interface FlashcardSetListProps {
   sets: FlashcardSet[];
+  onDelete?: (id: string) => void;
 }
 
-export const FlashcardSetList: React.FC<FlashcardSetListProps> = ({ sets }) => {
+export const FlashcardSetList: React.FC<FlashcardSetListProps> = ({ sets, onDelete }) => {
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.preventDefault(); // Prevent navigation
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete(id);
+    }
+  };
+
   if (sets.length === 0) {
     return (
       <div className="card text-center py-16">
@@ -46,13 +55,24 @@ export const FlashcardSetList: React.FC<FlashcardSetListProps> = ({ sets }) => {
               {/* Gradient accent */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
               
-              {/* Status badge */}
-              {hasStudied && (
-                <div className="absolute top-4 right-4 flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">
-                  <CheckCircle2 className="w-3 h-3" />
-                  Studied
-                </div>
-              )}
+              {/* Top right actions */}
+              <div className="absolute top-4 right-4 flex items-center gap-2">
+                {hasStudied && (
+                  <div className="flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Studied
+                  </div>
+                )}
+                {onDelete && (
+                  <button
+                    onClick={(e) => handleDelete(e, set.id)}
+                    className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                    title="Delete flashcard set"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
               
               {/* Icon */}
               <div className="inline-flex p-2.5 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-lg mb-3 group-hover:from-emerald-200 group-hover:to-teal-200 transition-colors">

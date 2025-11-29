@@ -48,6 +48,25 @@ export const FlashcardsPage = () => {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this flashcard set? This action cannot be undone.')) {
+      return;
+    }
+
+    const loadingToast = toast.loading('Deleting flashcard set...');
+    try {
+      await flashcardService.delete(id);
+      
+      // Refresh the flashcard list
+      const sets = await flashcardService.getAll();
+      setFlashcardSets(sets);
+      
+      toast.success('Flashcard set deleted successfully!', { id: loadingToast });
+    } catch (error) {
+      toast.error('Failed to delete flashcard set. Please try again.', { id: loadingToast });
+    }
+  };
+
   // Calculate stats
   const totalSets = flashcardSets.length;
   const totalCards = flashcardSets.reduce((sum, set) => 
@@ -58,7 +77,7 @@ export const FlashcardsPage = () => {
   return (
     <div className="space-y-6 pb-8">
       {/* Hero Header */}
-      <header className="relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 p-6 md:p-8 shadow-lg">
+      <header className="relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 dark:from-emerald-800 dark:via-teal-800 dark:to-cyan-900 p-6 md:p-8 shadow-lg">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white rounded-full"></div>
           <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white rounded-full"></div>
@@ -74,11 +93,11 @@ export const FlashcardsPage = () => {
                 <CreditCard className="w-10 h-10" />
                 Flashcard Generator
               </h1>
-              <p className="text-emerald-100 text-lg">Transform any content into effective study flashcards</p>
+              <p className="text-emerald-100 dark:text-emerald-200 text-lg">Transform any content into effective study flashcards</p>
             </div>
             <button
               onClick={() => setShowGenerator(!showGenerator)}
-              className="group flex items-center gap-2 px-6 py-3 bg-white text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all hover:scale-105 font-semibold shadow-lg"
+              className="group flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 rounded-xl transition-all hover:scale-105 font-semibold shadow-lg"
             >
               <Plus className="w-5 h-5" />
               {showGenerator ? 'Close Generator' : 'New Set'}
@@ -90,36 +109,36 @@ export const FlashcardsPage = () => {
       {/* Stats Overview */}
       {totalSets > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="card p-4 bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200">
+          <div className="card p-4 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-800 dark:to-gray-800 border-emerald-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500">
                 <Layers className="w-6 h-6 text-white" />
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold text-gray-900">{totalSets}</p>
-                <p className="text-xs text-gray-600 mt-1">Total Sets</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalSets}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Sets</p>
               </div>
             </div>
           </div>
-          <div className="card p-4 bg-gradient-to-br from-cyan-50 to-blue-50 border-cyan-200">
+          <div className="card p-4 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-gray-800 dark:to-gray-800 border-cyan-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500">
                 <CreditCard className="w-6 h-6 text-white" />
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold text-gray-900">{totalCards}</p>
-                <p className="text-xs text-gray-600 mt-1">Total Cards</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalCards}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Cards</p>
               </div>
             </div>
           </div>
-          <div className="card p-4 bg-gradient-to-br from-teal-50 to-emerald-50 border-teal-200">
+          <div className="card p-4 bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-gray-800 dark:to-gray-800 border-teal-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-500">
                 <BookOpen className="w-6 h-6 text-white" />
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold text-gray-900">{studiedSets}</p>
-                <p className="text-xs text-gray-600 mt-1">Studied Sets</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{studiedSets}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Studied Sets</p>
               </div>
             </div>
           </div>
@@ -130,7 +149,7 @@ export const FlashcardsPage = () => {
         <FlashcardGenerator onGenerate={handleGenerate} loading={loading} />
       )}
 
-      <FlashcardSetList sets={flashcardSets} />
+      <FlashcardSetList sets={flashcardSets} onDelete={handleDelete} />
     </div>
   );
 };

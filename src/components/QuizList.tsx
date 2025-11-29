@@ -1,12 +1,21 @@
 import { Link } from 'react-router-dom';
 import type { Quiz } from '../types';
-import { Calendar, FileText, Brain, Play, CheckCircle2 } from 'lucide-react';
+import { Calendar, FileText, Brain, Play, CheckCircle2, Trash2 } from 'lucide-react';
 
 interface QuizListProps {
   quizzes: Quiz[];
+  onDelete?: (id: string) => void;
 }
 
-export const QuizList: React.FC<QuizListProps> = ({ quizzes }) => {
+export const QuizList: React.FC<QuizListProps> = ({ quizzes, onDelete }) => {
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.preventDefault(); // Prevent navigation
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete(id);
+    }
+  };
+
   if (quizzes.length === 0) {
     return (
       <div className="card text-center py-16">
@@ -42,13 +51,24 @@ export const QuizList: React.FC<QuizListProps> = ({ quizzes }) => {
               {/* Gradient accent */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
               
-              {/* Status badge */}
-              {hasAttempts && (
-                <div className="absolute top-4 right-4 flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
-                  <CheckCircle2 className="w-3 h-3" />
-                  Attempted
-                </div>
-              )}
+              {/* Top right actions */}
+              <div className="absolute top-4 right-4 flex items-center gap-2">
+                {hasAttempts && (
+                  <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Attempted
+                  </div>
+                )}
+                {onDelete && (
+                  <button
+                    onClick={(e) => handleDelete(e, quiz.id)}
+                    className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                    title="Delete quiz"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
               
               {/* Icon */}
               <div className="inline-flex p-2.5 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg mb-3 group-hover:from-blue-200 group-hover:to-indigo-200 transition-colors">

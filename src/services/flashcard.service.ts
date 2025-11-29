@@ -1,10 +1,10 @@
-import { apiClient } from './api';
-import { FLASHCARD_ENDPOINTS } from '../config/api';
-import type { FlashcardSet, FlashcardGenerateRequest } from '../types';
+import { apiClient } from "./api";
+import { FLASHCARD_ENDPOINTS } from "../config/api";
+import type { FlashcardSet, FlashcardGenerateRequest } from "../types";
 
 export interface FlashcardJobStatus {
   jobId: string;
-  status: 'pending' | 'active' | 'completed' | 'failed';
+  status: "pending" | "active" | "completed" | "failed";
   progress?: any;
   result?: { success: boolean; flashcardSet: FlashcardSet };
   error?: string;
@@ -17,25 +17,25 @@ export const flashcardService = {
     files?: File[]
   ): Promise<{ jobId: string; status: string }> => {
     const formData = new FormData();
-    
+
     // Add files if provided
     if (files && files.length > 0) {
       for (const file of files) {
-        formData.append('files', file);
+        formData.append("files", file);
       }
     }
-    
+
     // Add other fields
-    if (request.topic) formData.append('topic', request.topic);
-    if (request.content) formData.append('content', request.content);
-    formData.append('numberOfCards', request.numberOfCards.toString());
-    
+    if (request.topic) formData.append("topic", request.topic);
+    if (request.content) formData.append("content", request.content);
+    formData.append("numberOfCards", request.numberOfCards.toString());
+
     const response = await apiClient.post<{ jobId: string; status: string }>(
       FLASHCARD_ENDPOINTS.GENERATE,
       formData,
       {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
       }
     );
@@ -44,20 +44,25 @@ export const flashcardService = {
 
   // Check job status
   getJobStatus: async (jobId: string): Promise<FlashcardJobStatus> => {
-    const response = await apiClient.get<FlashcardJobStatus>(`/flashcard/status/${jobId}`);
+    const response = await apiClient.get<FlashcardJobStatus>(
+      `/flashcard/status/${jobId}`
+    );
     return response.data;
   },
 
   // Poll for flashcard completion
-  pollForCompletion: async (jobId: string, maxAttempts = 60): Promise<FlashcardSet | null> => {
+  pollForCompletion: async (
+    jobId: string,
+    maxAttempts = 60
+  ): Promise<FlashcardSet | null> => {
     let attempts = 0;
-    
+
     while (attempts < maxAttempts) {
       const status = await flashcardService.getJobStatus(jobId);
-      
-      if (status.status === 'completed') {
+
+      if (status.status === "completed") {
         // Check if result exists and extract flashcardSet
-        if (status.result && typeof status.result === 'object') {
+        if (status.result && typeof status.result === "object") {
           const result = status.result as any;
           if (result.flashcardSet) {
             return result.flashcardSet;
@@ -66,17 +71,17 @@ export const flashcardService = {
         // Job completed successfully, return null to indicate success without direct result
         return null;
       }
-      
-      if (status.status === 'failed') {
-        throw new Error(status.error || 'Flashcard generation failed');
+
+      if (status.status === "failed") {
+        throw new Error(status.error || "Flashcard generation failed");
       }
-      
+
       // Wait 1 second before next poll
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       attempts++;
     }
-    
-    throw new Error('Flashcard generation timed out');
+
+    throw new Error("Flashcard generation timed out");
   },
 
   // Get all flashcard sets
@@ -98,12 +103,20 @@ export const flashcardService = {
   // Record flashcard study session
   recordSession: async (
     id: string,
-    cardResponses: Array<{ cardIndex: number; response: 'know' | 'dont-know' | 'skipped' }>
+    cardResponses: Array<{
+      cardIndex: number;
+      response: "know" | "dont-know" | "skipped";
+    }>
   ): Promise<any> => {
     const response = await apiClient.post(
       FLASHCARD_ENDPOINTS.RECORD_SESSION(id),
       { cardResponses }
     );
     return response.data;
+  },
+
+  // Delete flashcard set
+  delete: async (id: string): Promise<void> => {
+    await apiClient.delete(`/flashcards/${id}`);
   },
 };
