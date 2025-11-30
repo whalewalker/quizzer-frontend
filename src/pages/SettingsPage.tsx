@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
@@ -6,6 +6,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { userService } from '../services';
 import { User, Lock, Settings as SettingsIcon, AlertTriangle, Save } from 'lucide-react';
 import { Modal } from '../components/Modal';
+import { useProfile } from '../hooks';
 
 type TabType = 'account' | 'security' | 'preferences' | 'danger';
 
@@ -16,15 +17,18 @@ export const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState<TabType>('account');
   const [loading, setLoading] = useState(false);
 
+  // Use React Query for profile data
+  const { data: profileData, refetch } = useProfile();
+
   // Account form
-  const [name, setName] = useState('');
-  const [schoolName, setSchoolName] = useState('');
-  const [grade, setGrade] = useState('');
+  const [name, setName] = useState(profileData?.name || '');
+  const [schoolName, setSchoolName] = useState(profileData?.schoolName || '');
+  const [grade, setGrade] = useState(profileData?.grade || '');
 
   // Preferences form (excluding theme which is now in ThemeContext)
   const [preferences, setPreferences] = useState({
-    emailNotifications: true,
-    studyGoalMinutes: 30,
+    emailNotifications: profileData?.preferences?.emailNotifications ?? true,
+    studyGoalMinutes: profileData?.preferences?.studyGoalMinutes ?? 30,
   });
 
   // Password form
@@ -36,24 +40,15 @@ export const SettingsPage = () => {
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
-    try {
-      const data = await userService.getProfile();
-      setName(data.name);
-      setSchoolName(data.schoolName || '');
-      setGrade(data.grade || '');
-      if (data.preferences) {
-        setPreferences(prev => ({ ...prev, ...data.preferences }));
-      }
-    } catch (error) {
-      console.error('Error loading profile:', error);
-      toast.error('Failed to load profile');
+  // Update local state when profile data changes
+  if (profileData && !name) {
+    setName(profileData.name);
+    setSchoolName(profileData.schoolName || '');
+    setGrade(profileData.grade || '');
+    if (profileData.preferences) {
+      setPreferences(prev => ({ ...prev, ...profileData.preferences }));
     }
-  };
+  }
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +61,7 @@ export const SettingsPage = () => {
         grade: grade || undefined,
       });
       toast.success('Profile updated successfully!');
-      loadProfile();
+      refetch();
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');

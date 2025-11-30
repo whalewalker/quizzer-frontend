@@ -8,6 +8,8 @@ export interface Content {
   userId: string;
   createdAt: string;
   updatedAt: string;
+  quizId?: string;
+  flashcardSetId?: string;
 }
 
 export interface CreateContentDto {

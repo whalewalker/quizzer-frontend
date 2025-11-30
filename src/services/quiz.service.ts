@@ -42,6 +42,7 @@ export const quizService = {
     // Add other fields
     if (request.topic) formData.append("topic", request.topic);
     if (request.content) formData.append("content", request.content);
+    if (request.contentId) formData.append("contentId", request.contentId);
     formData.append("numberOfQuestions", request.numberOfQuestions.toString());
     formData.append("difficulty", request.difficulty || "medium");
 
@@ -74,22 +75,54 @@ export const quizService = {
   },
 
   // Poll for quiz completion
-  pollForCompletion: async (jobId: string, maxAttempts = 60): Promise<Quiz> => {
+  pollForCompletion: async (
+    jobId: string,
+    onProgress?: (progress: number) => void,
+    maxAttempts = 60
+  ): Promise<Quiz | null> => {
     let attempts = 0;
+    let jobFound = false;
 
     while (attempts < maxAttempts) {
-      const status = await quizService.getJobStatus(jobId);
+      try {
+        const status = await quizService.getJobStatus(jobId);
+        jobFound = true;
 
-      if (status.status === "completed" && status.result?.quiz) {
-        return status.result.quiz;
+        // Update progress if available
+        if (status.progress && onProgress) {
+          const progressValue =
+            typeof status.progress === "number"
+              ? status.progress
+              : status.progress.percent || 0;
+          onProgress(progressValue);
+        }
+
+        if (status.status === "completed") {
+          if (onProgress) onProgress(100);
+
+          if (status.result?.quiz) {
+            return status.result.quiz;
+          }
+          return null; // Success but no quiz object returned directly
+        }
+
+        if (status.status === "failed") {
+          throw new Error(status.error || "Quiz generation failed");
+        }
+      } catch (error: any) {
+        // Handle 404: If job was previously found, it might have been completed and removed
+        if (error?.response?.status === 404 && jobFound) {
+          if (onProgress) onProgress(100);
+          return null; // Assume success
+        }
+        // If never found or other error, rethrow
+        if (error?.response?.status !== 404) {
+          throw error;
+        }
       }
 
-      if (status.status === "failed") {
-        throw new Error(status.error || "Quiz generation failed");
-      }
-
-      // Wait 1 second before next poll
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Wait 5 seconds before next poll
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       attempts++;
     }
 

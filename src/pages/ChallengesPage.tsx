@@ -1,61 +1,51 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import { challengeService, leaderboardService } from '../services';
-import type { Challenge, LeaderboardEntry } from '../types';
+import { challengeService } from '../services';
+import { useChallenges, useLeaderboard } from '../hooks';
 import { Trophy, Target, Users, Crown, Medal, Flame, Zap, TrendingUp, Clock, Sparkles, UserPlus, CheckCircle } from 'lucide-react';
+import { CardSkeleton, TableSkeleton } from '../components/skeletons';
 
 export const ChallengesPage = () => {
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [joinedChallenges, setJoinedChallenges] = useState<Set<string>>(new Set());
+  const { data: challenges = [], isLoading: challengesLoading, refetch: refetchChallenges } = useChallenges();
+  const { data: leaderboardData, isLoading: leaderboardLoading } = useLeaderboard('global');
+  
+  const loading = challengesLoading || leaderboardLoading;
+  const leaderboard = useMemo(() => leaderboardData?.entries.slice(0, 10) ?? [], [leaderboardData]);
+  
+  // Track which challenges user has joined (based on progress > 0 or completed)
+  const joinedChallenges = useMemo(() => {
+    return new Set(
+      challenges
+        .filter(c => c.progress > 0 || c.completed)
+        .map(c => c.id)
+    );
+  }, [challenges]);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      const [challengesData, leaderboardData] = await Promise.all([
-        challengeService.getAll(),
-        leaderboardService.getGlobal(),
-      ]);
-      setChallenges(challengesData);
-      setLeaderboard(leaderboardData.entries.slice(0, 10));
-      
-      // Track which challenges user has joined (based on progress > 0 or completed)
-      const joined = new Set(
-        challengesData
-          .filter(c => c.progress > 0 || c.completed)
-          .map(c => c.id)
-      );
-      setJoinedChallenges(joined);
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleJoinChallenge = async (challengeId: string) => {
+  const handleJoinChallenge = useCallback(async (challengeId: string) => {
     try {
       await challengeService.join(challengeId);
-      setJoinedChallenges(prev => new Set(prev).add(challengeId));
       toast.success('Challenge joined! Start completing tasks to earn rewards.');
-      // Reload data to get updated challenge list
-      await loadData();
+      // Refetch challenges to get updated list
+      await refetchChallenges();
     } catch (error: any) {
       console.error('Error joining challenge:', error);
       toast.error(error?.response?.data?.message || 'Failed to join challenge. Please try again.');
     }
-  };
+  }, [refetchChallenges]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-3 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading challenges...</p>
+      <div className="space-y-6 pb-8">
+        <div className="card bg-primary-600 dark:bg-primary-900 p-6 md:p-8">
+          <div className="h-32" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4">
+            <CardSkeleton count={4} />
+          </div>
+          <div className="card dark:bg-gray-800">
+            <TableSkeleton rows={10} columns={2} />
+          </div>
         </div>
       </div>
     );

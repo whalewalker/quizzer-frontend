@@ -11,6 +11,9 @@ export interface StatisticsOverview {
 
 export interface Attempt {
   id: string;
+  userId: string;
+  quizId?: string;
+  flashcardSetId?: string;
   type: "quiz" | "flashcard";
   score?: number;
   totalQuestions?: number;
@@ -47,6 +50,8 @@ export const statisticsService = {
 
   async getAttempts(filters?: {
     type?: "quiz" | "flashcard";
+    quizId?: string;
+    flashcardSetId?: string;
     startDate?: string;
     endDate?: string;
     limit?: number;

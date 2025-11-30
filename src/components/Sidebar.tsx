@@ -47,7 +47,17 @@ export const Sidebar = ({ isCollapsed, toggleCollapse, isOpen, closeMobile }: Si
     filteredNavItems = navItems;
   }
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    if (location.pathname === path) return true;
+    
+    // Prevent /admin or /dashboard from matching sub-routes incorrectly
+    if (path === '/admin' || path === '/dashboard') return false;
+
+    // Map content pages to Study section
+    if (path === '/study' && location.pathname.startsWith('/content')) return true;
+
+    return location.pathname.startsWith(`${path}/`);
+  };
 
   return (
     <>

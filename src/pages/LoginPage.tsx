@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { analytics } from '../services/analytics.service';
 import { authService } from '../services/auth.service';
-import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -14,44 +15,50 @@ export const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = useCallback(async () => {
     setError('');
     setGoogleLoading(true);
 
     try {
-      const response = await authService.googleSignIn();
-      login(response.user, response.accessToken);
-      if (response.user.role === 'ADMIN' || response.user.role === 'SUPER_ADMIN') {
+      const user = await authService.googleSignIn();
+      login(user);
+      analytics.trackAuthLogin('google', true);
+      if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
         navigate('/admin');
       } else {
         navigate('/dashboard');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Google sign-in failed. Please try again.');
+      const errorMessage = err.response?.data?.message || 'Google sign-in failed. Please try again.';
+      setError(errorMessage);
+      analytics.trackAuthLogin('google', false, errorMessage);
     } finally {
       setGoogleLoading(false);
     }
-  };
+  }, [login, navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      const response = await authService.login(email, password);
-      login(response.user, response.accessToken);
-      if (response.user.role === 'ADMIN' || response.user.role === 'SUPER_ADMIN') {
+      const user = await authService.login(email, password);
+      login(user);
+      analytics.trackAuthLogin('email', true);
+      if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
         navigate('/admin');
       } else {
         navigate('/dashboard');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Authentication failed. Please try again.');
+      const errorMessage = err.response?.data?.message || 'Authentication failed. Please try again.';
+      setError(errorMessage);
+      analytics.trackAuthLogin('email', false, errorMessage);
     } finally {
       setLoading(false);
     }
-  };
+  }, [email, password, login, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
@@ -105,7 +112,11 @@ export const LoginPage = () => {
           </div>
 
           {/* Email/Password Form - Secondary */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form 
+            onSubmit={handleSubmit} 
+            className="space-y-4"
+            onClick={() => error && setError('')}
+          >
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
               <div className="relative">
@@ -114,7 +125,10 @@ export const LoginPage = () => {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError('');
+                  }}
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                   placeholder="you@example.com"
                   required
@@ -130,7 +144,10 @@ export const LoginPage = () => {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError('');
+                  }}
                   className="w-full pl-10 pr-12 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                   placeholder="••••••••"
                   required
@@ -147,8 +164,13 @@ export const LoginPage = () => {
             </div>
 
             {error && (
-              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              <div 
+                className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg animate-fade-in flex items-start gap-3"
+                role="alert"
+                aria-live="polite"
+              >
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-600 dark:text-red-400 font-medium">{error}</p>
               </div>
             )}
 

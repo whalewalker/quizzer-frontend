@@ -1,15 +1,22 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { FlashcardGenerateRequest } from '../types';
 import { Layers, Sparkles } from 'lucide-react';
 
 interface FlashcardGeneratorProps {
   onGenerate: (request: FlashcardGenerateRequest, files?: File[]) => void;
   loading: boolean;
+  initialValues?: {
+    topic?: string;
+    content?: string;
+    mode?: 'topic' | 'content' | 'files';
+    contentId?: string;
+  };
 }
 
 export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
   onGenerate,
   loading,
+  initialValues,
 }) => {
   const [mode, setMode] = useState<'topic' | 'content' | 'files'>('topic');
   const [topic, setTopic] = useState('');
@@ -18,6 +25,14 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
   const [numberOfCards, setNumberOfCards] = useState(10);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (initialValues) {
+      if (initialValues.topic) setTopic(initialValues.topic);
+      if (initialValues.content) setContent(initialValues.content);
+      if (initialValues.mode) setMode(initialValues.mode);
+    }
+  }, [initialValues]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -52,12 +67,14 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const contentId = initialValues?.contentId;
+
     if (mode === 'topic' && topic.trim()) {
-      onGenerate({ topic, numberOfCards });
+      onGenerate({ topic, numberOfCards, contentId });
     } else if (mode === 'content' && content.trim()) {
-      onGenerate({ content, numberOfCards });
+      onGenerate({ content, numberOfCards, contentId });
     } else if (mode === 'files' && files.length > 0) {
-      onGenerate({ numberOfCards }, files);
+      onGenerate({ numberOfCards, contentId }, files);
     }
   };
 

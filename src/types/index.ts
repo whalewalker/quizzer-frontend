@@ -44,7 +44,6 @@ export interface ChangePasswordRequest {
 // Auth types
 export interface AuthResponse {
   user: User;
-  accessToken: string;
 }
 
 // Quiz types
@@ -96,6 +95,7 @@ export interface QuizGenerateRequest {
   quizType?: QuizType;
   timeLimit?: number;
   questionTypes?: QuestionType[];
+  contentId?: string;
 }
 
 export interface QuizSubmission {
@@ -131,6 +131,7 @@ export interface FlashcardGenerateRequest {
   topic?: string;
   content?: string;
   numberOfCards: number;
+  contentId?: string;
 }
 
 // Streak types

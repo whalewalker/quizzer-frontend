@@ -1,13 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { contentService, taskService } from '../services';
-import { type Content } from '../services/content.service';
+import { contentService } from '../services';
+import { analytics } from '../services/analytics.service';
+import { useContents, usePopularTopics, useTaskStatus } from '../hooks';
 import { Sparkles, FileText, Upload, Plus, BookOpen, Zap, Calendar, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Modal } from '../components/Modal';
+import { CardSkeleton } from '../components/skeletons';
 
 export const StudyPage = () => {
   const navigate = useNavigate();
@@ -26,79 +28,41 @@ export const StudyPage = () => {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const [popularTopics, setPopularTopics] = useState<string[]>([]);
-
-  // Content list state
-  const [contents, setContents] = useState<Content[]>([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [isLoadingContents, setIsLoadingContents] = useState(false);
-
   // Delete state
   const [deleteContentId, setDeleteContentId] = useState<string | null>(null);
 
-  const fetchContents = async () => {
-    setIsLoadingContents(true);
-    try {
-      const response = await contentService.getAll(undefined, page, 6);
-      if (Array.isArray(response)) {
-          setContents(response);
-      } else {
-          setContents(response.data);
-          setTotalPages(response.meta.totalPages);
-      }
-    } catch (error) {
-      console.error('Error fetching contents:', error);
-      toast.error('Failed to load contents');
-    } finally {
-      setIsLoadingContents(false);
+  // Use React Query hooks for data fetching
+  const [page, setPage] = useState(1);
+  const { data: contentsData, isLoading: isLoadingContents, refetch } = useContents(undefined, page, 6);
+  const { data: popularTopics = [] } = usePopularTopics();
+
+  const contents = contentsData?.data ?? [];
+  const totalPages = contentsData?.meta?.totalPages ?? 1;
+
+  // Use React Query for task polling
+  const taskQuery = useTaskStatus(taskId);
+
+  // Handle task completion
+  useEffect(() => {
+    if (!taskQuery.data) return;
+    
+    const task = taskQuery.data;
+    if (task.status === 'COMPLETED') {
+      toast.success('Content generated successfully!');
+      setTaskId(null);
+      setIsProcessing(false);
+      setContentLoading(false);
+      refetch();
+      navigate(`/content/${task.result.contentId}`);
+    } else if (task.status === 'FAILED') {
+      setIsProcessing(false);
+      setTaskId(null);
+      setContentLoading(false);
+      toast.error(`Generation failed: ${task.error}`);
     }
-  };
+  }, [taskQuery.data, navigate, refetch]);
 
-  useEffect(() => {
-    fetchContents();
-  }, [page, taskId]); // Refresh when page changes or new task completes
-
-  useEffect(() => {
-    const fetchPopularTopics = async () => {
-      try {
-        const topics = await contentService.getPopularTopics();
-        setPopularTopics(topics);
-      } catch (error) {
-        console.error('Error fetching popular topics:', error);
-      }
-    };
-    fetchPopularTopics();
-  }, []);
-
-  // Polling for task status
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (taskId && isProcessing) {
-      interval = setInterval(async () => {
-        try {
-          const task = await taskService.getStatus(taskId);
-          if (task.status === 'COMPLETED') {
-            setIsProcessing(false);
-            setTaskId(null);
-            setContentLoading(false);
-            toast.success('Content generated successfully!');
-            navigate(`/content/${task.result.contentId}`);
-          } else if (task.status === 'FAILED') {
-            setIsProcessing(false);
-            setTaskId(null);
-            setContentLoading(false);
-            toast.error(`Generation failed: ${task.error}`);
-          }
-        } catch (error) {
-          console.error('Error polling task:', error);
-        }
-      }, 2000);
-    }
-    return () => clearInterval(interval);
-  }, [taskId, isProcessing, navigate]);
-
-  const handleGenerateFromTopic = async () => {
+  const handleGenerateFromTopic = useCallback(async () => {
     if (!topic.trim()) {
       toast.error('Please enter a topic');
       return;
@@ -115,9 +79,9 @@ export const StudyPage = () => {
       toast.error('Failed to generate content. Please try again.');
       setContentLoading(false);
     }
-  };
+  }, [topic]);
 
-  const handleCreateFromText = async () => {
+  const handleCreateFromText = useCallback(async () => {
     if (!textTitle.trim() || !textContent.trim()) {
       toast.error('Please fill in all fields');
       return;
@@ -138,9 +102,9 @@ export const StudyPage = () => {
     } finally {
       setContentLoading(false);
     }
-  };
+  }, [textTitle, textContent, textTopic, navigate]);
 
-  const handleFileUpload = async () => {
+  const handleFileUpload = useCallback(async () => {
     if (!file) {
       toast.error('Please select a file');
       return;
@@ -148,32 +112,35 @@ export const StudyPage = () => {
 
     setContentLoading(true);
     try {
+      analytics.trackFileUpload(file.name, file.size, file.type);
       const content = await contentService.createFromFile(file);
       toast.success('File uploaded and processed successfully!');
+      analytics.trackFileUploadResult(file.name, true);
       navigate(`/content/${content.id}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading file:', error);
       toast.error('Failed to upload file. Please try again.');
+      analytics.trackFileUploadResult(file.name, false, error.message || 'Upload failed');
     } finally {
       setContentLoading(false);
     }
-  };
+  }, [file, navigate]);
 
-  const confirmDeleteContent = async () => {
+  const confirmDeleteContent = useCallback(async () => {
     if (!deleteContentId) return;
 
     const loadingToast = toast.loading('Deleting content...');
     try {
       await contentService.delete(deleteContentId);
       toast.success('Content deleted successfully!', { id: loadingToast });
-      fetchContents(); // Refresh list
+      // React Query will automatically refetch the contents list
     } catch (error) {
       console.error('Error deleting content:', error);
       toast.error('Failed to delete content', { id: loadingToast });
     } finally {
       setDeleteContentId(null);
     }
-  };
+  }, [deleteContentId]);
 
   return (
     <div className="space-y-6 pb-8">
@@ -503,8 +470,8 @@ export const StudyPage = () => {
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Your Study Materials</h2>
         
         {isLoadingContents ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-600 border-t-transparent"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <CardSkeleton count={6} />
           </div>
         ) : contents.length > 0 ? (
           <>

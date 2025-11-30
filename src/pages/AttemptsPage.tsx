@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
@@ -10,107 +10,71 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import toast from 'react-hot-toast';
-import { attemptService } from '../services';
 import type { Attempt } from '../types';
+import { useAttempts } from '../hooks';
+import { CardSkeleton, ChartSkeleton, StatCardSkeleton } from '../components/skeletons';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#6366f1'];
 
 export function AttemptsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [attempts, setAttempts] = useState<Attempt[]>([]);
-  const [filteredAttempts, setFilteredAttempts] = useState<Attempt[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<'all' | 'quiz' | 'flashcard'>('all');
   const [selectedItem, setSelectedItem] = useState<{ id: string; title: string; type: 'quiz' | 'flashcard' } | null>(null);
 
-  useEffect(() => {
-    fetchAttempts();
-  }, []);
+  // Get URL params for filtering
+  const quizId = searchParams.get('quizId');
+  const flashcardId = searchParams.get('flashcardId');
 
+  // Use React Query hook with filters
+  const { data: attemptsData, isLoading: loading, error } = useAttempts({
+    quizId: quizId || undefined,
+    flashcardSetId: flashcardId || undefined,
+  });
+
+  // Extract attempts array from paginated response
+  const attempts = attemptsData?.attempts || [];
+
+  // Handle errors
+  if (error) {
+    toast.error('Failed to load attempts');
+  }
+
+  // Sync selected item with URL params
   useEffect(() => {
-    // Check if we have a specific quiz or flashcard to show
-    const quizId = searchParams.get('quizId');
-    const flashcardId = searchParams.get('flashcardId');
-    
-    if (quizId) {
-      fetchQuizAttempts(quizId);
-    } else if (flashcardId) {
-      fetchFlashcardAttempts(flashcardId);
+    if (!quizId && !flashcardId) {
+      setSelectedItem(null);
+      return;
     }
-  }, [searchParams]);
 
-  useEffect(() => {
-    applyFilters();
-  }, [attempts, filterType]);
-
-  const fetchAttempts = async () => {
-    try {
-      setLoading(true);
-      const data = await attemptService.getAll();
-      setAttempts(data);
-    } catch (error) {
-      console.error('Error fetching attempts:', error);
-      toast.error('Failed to load attempts');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchQuizAttempts = async (quizId: string) => {
-    try {
-      setLoading(true);
-      const data = await attemptService.getByQuizId(quizId);
-      if (data.length > 0) {
+    if (attempts.length > 0) {
+      if (quizId) {
+        const attempt = attempts.find(a => a.quizId === quizId) || attempts[0];
         setSelectedItem({
           id: quizId,
-          title: data[0].quiz?.title || 'Quiz',
+          title: attempt.quiz?.title || 'Quiz',
           type: 'quiz'
         });
-        setAttempts(data);
-      }
-    } catch (error) {
-      console.error('Error fetching quiz attempts:', error);
-      toast.error('Failed to load quiz attempts');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchFlashcardAttempts = async (flashcardId: string) => {
-    try {
-      setLoading(true);
-      const data = await attemptService.getByFlashcardId(flashcardId);
-      if (data.length > 0) {
+      } else if (flashcardId) {
+        const attempt = attempts.find(a => a.flashcardSetId === flashcardId) || attempts[0];
         setSelectedItem({
           id: flashcardId,
-          title: data[0].flashcardSet?.title || 'Flashcard Set',
+          title: attempt.flashcardSet?.title || 'Flashcard Set',
           type: 'flashcard'
         });
-        setAttempts(data);
       }
-    } catch (error) {
-      console.error('Error fetching flashcard attempts:', error);
-      toast.error('Failed to load flashcard attempts');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [quizId, flashcardId, attempts]);
 
-  const applyFilters = () => {
-    let filtered = [...attempts];
-    
-    if (filterType !== 'all') {
-      filtered = filtered.filter(attempt => attempt.type === filterType);
-    }
-    
-    setFilteredAttempts(filtered);
-  };
+  // Use useMemo for filtering instead of useEffect
+  const filteredAttempts = useMemo(() => {
+    if (filterType === 'all') return attempts;
+    return attempts.filter(attempt => attempt.type === filterType);
+  }, [attempts, filterType]);
 
   const handleClearSelection = () => {
     setSelectedItem(null);
     setSearchParams({});
-    fetchAttempts();
   };
 
   // Calculate statistics
@@ -121,20 +85,21 @@ export function AttemptsPage() {
     averageScore: filteredAttempts.length > 0
       ? Math.round(
           filteredAttempts
-            .filter(a => a.score !== undefined && a.totalQuestions)
-            .reduce((sum, a) => sum + ((a.score! / a.totalQuestions!) * 100), 0) /
-          filteredAttempts.filter(a => a.score !== undefined && a.totalQuestions).length
+            .filter(a => a.score !== undefined && a.totalQuestions && a.totalQuestions > 0)
+            .reduce((sum, a) => sum + Math.max(0, (a.score! / a.totalQuestions!) * 100), 0) /
+          filteredAttempts.filter(a => a.score !== undefined && a.totalQuestions && a.totalQuestions > 0).length
         )
       : 0,
   };
 
   // Prepare chart data - Score trend over time
   const scoreTrendData = filteredAttempts
-    .filter(a => a.score !== undefined && a.totalQuestions)
+    .filter(a => a.score !== undefined && a.totalQuestions && a.totalQuestions > 0)
     .slice(0, 20)
     .reverse()
     .map((attempt, index) => {
-      const scorePercent = Math.round((attempt.score! / attempt.totalQuestions!) * 100);
+      const rawPercent = (attempt.score! / attempt.totalQuestions!) * 100;
+      const scorePercent = Math.round(Math.max(0, rawPercent));
       return {
         name: format(parseISO(attempt.completedAt), 'MMM dd'),
         fullDate: format(parseISO(attempt.completedAt), 'MMM dd, yyyy h:mm a'),
@@ -187,8 +152,23 @@ export function AttemptsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <div className="mb-4">
+            <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-2 animate-pulse"></div>
+            <div className="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <StatCardSkeleton count={4} />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <ChartSkeleton />
+          <ChartSkeleton />
+        </div>
+        <div className="space-y-4">
+          <CardSkeleton count={3} />
+        </div>
       </div>
     );
   }
@@ -480,7 +460,7 @@ export function AttemptsPage() {
                   {attempt.score !== undefined && attempt.totalQuestions && (
                     <div className="text-right">
                       <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {Math.round((attempt.score / attempt.totalQuestions) * 100)}%
+                        {Math.round(Math.max(0, (attempt.score / attempt.totalQuestions) * 100))}%
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-500">Score</p>
                     </div>
@@ -541,12 +521,12 @@ export function AttemptsPage() {
                   <ResponsiveContainer width="100%" height={80}>
                     <LineChart data={item.attempts.slice(0, 10).reverse().map((a: Attempt, i: number) => ({
                       name: `#${i + 1}`,
-                      score: a.score && a.totalQuestions ? Math.round((a.score / a.totalQuestions) * 100) : 0,
+                      score: a.score && a.totalQuestions ? Math.round(Math.max(0, (a.score / a.totalQuestions) * 100)) : 0,
                     }))}>
                       <Line 
                         type="monotone" 
                         dataKey="score" 
-                        stroke="#3b82f6" 
+                        stroke={item.type === 'quiz' ? '#8b5cf6' : '#ec4899'} 
                         strokeWidth={2}
                         dot={false}
                       />

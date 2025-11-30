@@ -1,76 +1,65 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart3, TrendingUp, Clock, Flame, BookOpen, Layers, ArrowRight } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 import { format, formatDistanceToNow } from 'date-fns';
-import { statisticsService } from '../services/statistics.service';
-import type { StatisticsOverview, Attempt, PerformanceByTopic } from '../services/statistics.service';
+import { useStatistics } from '../hooks';
+import type { Attempt, PerformanceByTopic } from '../services/statistics.service';
+import { StatCardSkeleton, ChartSkeleton, TableSkeleton } from '../components/skeletons';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#6366f1'];
 
 export const StatisticsPage = () => {
   const navigate = useNavigate();
-  const [overview, setOverview] = useState<StatisticsOverview | null>(null);
-  const [recentAttempts, setRecentAttempts] = useState<Attempt[]>([]);
-  const [performanceByTopic, setPerformanceByTopic] = useState<PerformanceByTopic[]>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const { data, isLoading: loading } = useStatistics(page);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [overviewData, attemptsData, performanceData] = await Promise.all([
-          statisticsService.getOverview(),
-          statisticsService.getAttempts({ limit: 10, page }),
-          statisticsService.getPerformanceByTopic(),
-        ]);
-        
-        setOverview(overviewData);
-        setRecentAttempts(attemptsData.attempts);
-        setTotalPages(attemptsData.totalPages);
-        setPerformanceByTopic(performanceData);
-      } catch (error) {
-        console.error('Failed to fetch statistics:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const overview = useMemo(() => data?.overview ?? null, [data?.overview]);
+  const recentAttempts = useMemo(() => data?.attempts ?? [], [data?.attempts]);
+  const totalPages = useMemo(() => data?.totalPages ?? 1, [data?.totalPages]);
+  const performanceByTopic = useMemo(() => data?.performanceByTopic ?? [], [data?.performanceByTopic]);
 
-    fetchData();
-  }, [page]);
-
-  const handleAttemptClick = (attempt: Attempt) => {
+  const handleAttemptClick = useCallback((attempt: Attempt) => {
     if (attempt.type === 'quiz' && attempt.quiz?.id) {
-      navigate(`/quiz/${attempt.quiz.id}/results/${attempt.id}`);
+      navigate(`/attempts?quizId=${attempt.quiz.id}`);
     } else if (attempt.type === 'flashcard' && attempt.flashcardSet?.id) {
-      navigate(`/flashcards/${attempt.flashcardSet.id}`);
+      navigate(`/attempts?flashcardId=${attempt.flashcardSet.id}`);
     }
-  };
+  }, [navigate]);
 
-  if (loading && !overview) {
+  // Prepare data for charts with memoization - MUST be before conditional returns
+  const typeDistributionData = useMemo(() => [
+    { name: 'Quizzes', value: overview?.quizAttempts || 0 },
+    { name: 'Flashcards', value: overview?.flashcardAttempts || 0 },
+  ], [overview?.quizAttempts, overview?.flashcardAttempts]);
+
+  const performanceChartData = useMemo(() => 
+    performanceByTopic.slice(0, 5).map((topic: PerformanceByTopic) => ({
+      name: topic.topic.length > 15 ? topic.topic.substring(0, 15) + '...' : topic.topic,
+      accuracy: Math.round(topic.accuracy),
+      attempts: topic.attempts,
+    }))
+  , [performanceByTopic]);
+
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading statistics...</p>
+      <div className="space-y-6 pb-8">
+        <div className="card bg-primary-600 dark:bg-primary-900 p-6 md:p-8">
+          <div className="h-24" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCardSkeleton count={4} />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ChartSkeleton />
+          <ChartSkeleton />
+        </div>
+        <div className="card dark:bg-gray-800">
+          <TableSkeleton rows={10} columns={5} />
         </div>
       </div>
     );
   }
-
-  // Prepare data for charts
-  const typeDistributionData = [
-    { name: 'Quizzes', value: overview?.quizAttempts || 0 },
-    { name: 'Flashcards', value: overview?.flashcardAttempts || 0 },
-  ];
-
-  const performanceChartData = performanceByTopic.slice(0, 5).map((topic: PerformanceByTopic) => ({
-    name: topic.topic.length > 15 ? topic.topic.substring(0, 15) + '...' : topic.topic,
-    accuracy: Math.round(topic.accuracy),
-    attempts: topic.attempts,
-  }));
 
   return (
     <div className="space-y-6 pb-8">
@@ -357,28 +346,27 @@ export const StatisticsPage = () => {
                       <td className="py-3 px-4">
                         {attempt.score !== undefined && attempt.totalQuestions ? (
                           <div className="flex flex-col gap-1 w-32">
-                            <div className="flex justify-between text-xs font-medium">
-                              <span className="text-gray-900 dark:text-gray-100">{attempt.score}/{attempt.totalQuestions}</span>
+                            <div className="flex justify-end text-xs font-medium">
                               <span className={`${
-                                (attempt.score / attempt.totalQuestions) >= 0.7 
+                                (Math.max(0, attempt.score) / attempt.totalQuestions) >= 0.7 
                                   ? 'text-green-600' 
-                                  : (attempt.score / attempt.totalQuestions) >= 0.5 
+                                  : (Math.max(0, attempt.score) / attempt.totalQuestions) >= 0.5 
                                   ? 'text-yellow-600' 
                                   : 'text-red-600'
                               }`}>
-                                {Math.round((attempt.score / attempt.totalQuestions) * 100)}%
+                                {Math.round((Math.max(0, attempt.score) / attempt.totalQuestions) * 100)}%
                               </span>
                             </div>
                               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                               <div 
                                 className={`h-2 rounded-full ${
-                                  (attempt.score / attempt.totalQuestions) >= 0.7 
+                                  (Math.max(0, attempt.score) / attempt.totalQuestions) >= 0.7 
                                     ? 'bg-green-500' 
-                                    : (attempt.score / attempt.totalQuestions) >= 0.5 
+                                    : (Math.max(0, attempt.score) / attempt.totalQuestions) >= 0.5 
                                     ? 'bg-yellow-500' 
                                     : 'bg-red-500'
                                 }`}
-                                style={{ width: `${Math.round((attempt.score / attempt.totalQuestions) * 100)}%` }}
+                                style={{ width: `${Math.round((Math.max(0, attempt.score) / attempt.totalQuestions) * 100)}%` }}
                               ></div>
                             </div>
                           </div>

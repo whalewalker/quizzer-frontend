@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { analytics } from '../services/analytics.service';
 import { authService } from '../services/auth.service';
-import { Mail, Lock, User, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 export const SignupPage = () => {
   const [email, setEmail] = useState('');
@@ -20,8 +21,8 @@ export const SignupPage = () => {
     setGoogleLoading(true);
 
     try {
-      const response = await authService.googleSignIn();
-      login(response.user, response.accessToken);
+      const user = await authService.googleSignIn();
+      login(user);
       // Redirect to onboarding for new users
       navigate('/onboarding');
     } catch (err: any) {
@@ -37,12 +38,16 @@ export const SignupPage = () => {
     setLoading(true);
 
     try {
-      const response = await authService.signup(email, password, name, '');
-      login(response.user, response.accessToken);
+      await authService.signup(email, password, name, '');
+      analytics.trackAuthSignup('email', true);
+      // Login automatically after signup
+      await login({ email, password } as any);
       // Redirect to onboarding for new users
       navigate('/onboarding');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Signup failed. Please try again.');
+      const errorMessage = err.response?.data?.message || 'Failed to create account';
+      setError(errorMessage);
+      analytics.trackAuthSignup('email', false, errorMessage);
     } finally {
       setLoading(false);
     }
@@ -95,7 +100,11 @@ export const SignupPage = () => {
           </div>
 
           {/* Email/Password Form - Secondary */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form 
+            onSubmit={handleSubmit} 
+            className="space-y-4"
+            onClick={() => error && setError('')}
+          >
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
               <div className="relative">
@@ -104,7 +113,10 @@ export const SignupPage = () => {
                   id="name"
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (error) setError('');
+                  }}
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                   placeholder="John Doe"
                   required
@@ -120,7 +132,10 @@ export const SignupPage = () => {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError('');
+                  }}
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                   placeholder="you@example.com"
                   required
@@ -136,7 +151,10 @@ export const SignupPage = () => {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError('');
+                  }}
                   className="w-full pl-10 pr-12 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                   placeholder="••••••••"
                   required
@@ -145,7 +163,7 @@ export const SignupPage = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-40:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -155,8 +173,13 @@ export const SignupPage = () => {
             </div>
 
             {error && (
-              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              <div 
+                className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg animate-fade-in flex items-start gap-3"
+                role="alert"
+                aria-live="polite"
+              >
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-600 dark:text-red-400 font-medium">{error}</p>
               </div>
             )}
 

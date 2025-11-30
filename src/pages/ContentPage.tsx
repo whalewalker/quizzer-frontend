@@ -1,19 +1,22 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { BookOpen, Highlighter, MessageSquare, Brain, ArrowLeft, Loader2, StickyNote, Trash2, Calendar, Check, Edit3, Save } from 'lucide-react';
+import { BookOpen, Highlighter, Brain, ArrowLeft, Loader2, StickyNote, Trash2, Calendar, Check, Edit3, Save } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { format } from 'date-fns';
-import { flashcardService } from '../services/flashcard.service';
-import { quizService } from '../services/quiz.service';
+
 import { contentService, type Content } from '../services/content.service';
 import toast from 'react-hot-toast';
+import { analytics } from '../services/analytics.service';
 import { Modal } from '../components/Modal';
 import { InlineNoteInput } from '../components/InlineNoteInput';
+
 import './ContentPage.css';
+import { useContent } from '../hooks';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Highlight {
   id: string;
@@ -42,11 +45,11 @@ const HIGHLIGHT_BORDER_COLORS = {
 export const ContentPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [content, setContent] = useState<ExtendedContent | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: contentData, isLoading: loading, error, refetch } = useContent(id);
+  const content = contentData as ExtendedContent | undefined;
   const [selectedText, setSelectedText] = useState('');
   const [toolbarPosition, setToolbarPosition] = useState<{ x: number; y: number } | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [showNotes, setShowNotes] = useState(true);
   const [selectedColor, setSelectedColor] = useState<'yellow' | 'green' | 'pink'>('yellow');
@@ -63,23 +66,19 @@ export const ContentPage = () => {
   const [deleteHighlightId, setDeleteHighlightId] = useState<string | null>(null);
   const [isDeleteContentModalOpen, setIsDeleteContentModalOpen] = useState(false);
 
-  const fetchContent = async () => {
-    if (!id) return;
-    try {
-      const data = await contentService.getById(id);
-      setContent(data);
-    } catch (error) {
-      console.error('Error fetching content:', error);
-      toast.error('Failed to load content');
-      navigate('/dashboard');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Handle errors
+  if (error) {
+    toast.error('Failed to load content');
+    navigate('/dashboard');
+  }
 
   useEffect(() => {
-    fetchContent();
-  }, [id, navigate]);
+    if (content) {
+      // Default to 'text' if type is missing, or infer from content structure
+      const contentType = (content as any).type || 'text'; 
+      analytics.trackContentView(content.id, contentType, content.title);
+    }
+  }, [content]);
 
   useEffect(() => {
     const handleSelection = () => {
@@ -125,7 +124,7 @@ export const ContentPage = () => {
         color: color
       });
       toast.success('Text highlighted');
-      fetchContent(); // Refresh to show new highlight
+      refetch(); // Refresh to show new highlight
     } catch (error) {
       console.error('Failed to highlight:', error);
       toast.error('Failed to save highlight');
@@ -135,58 +134,7 @@ export const ContentPage = () => {
     }
   };
 
-  const handleCreateFlashcard = async () => {
-    if (!selectedText) return;
-    
-    try {
-      setIsCreating(true);
-      const { jobId } = await flashcardService.generate({
-        topic: content?.topic || 'General',
-        content: selectedText,
-        numberOfCards: 5 // Minimum 5 cards
-      });
 
-      toast.loading('Creating flashcards...', { id: 'create-flashcard' });
-      
-      await flashcardService.pollForCompletion(jobId);
-      
-      toast.success('Flashcards created successfully!', { id: 'create-flashcard' });
-    } catch (error) {
-      console.error('Failed to create flashcard:', error);
-      toast.error('Failed to create flashcards. Try selecting more text.', { id: 'create-flashcard' });
-    } finally {
-      setIsCreating(false);
-      setToolbarPosition(null);
-      window.getSelection()?.removeAllRanges();
-    }
-  };
-
-  const handleCreateQuestion = async () => {
-    if (!selectedText) return;
-
-    try {
-      setIsCreating(true);
-      const { jobId } = await quizService.generate({
-        topic: content?.topic || 'General',
-        content: selectedText,
-        numberOfQuestions: 1,
-        difficulty: 'medium'
-      });
-
-      toast.loading('Creating question...', { id: 'create-question' });
-
-      await quizService.pollForCompletion(jobId);
-
-      toast.success('Question created successfully!', { id: 'create-question' });
-    } catch (error) {
-      console.error('Failed to create question:', error);
-      toast.error('Failed to create question', { id: 'create-question' });
-    } finally {
-      setIsCreating(false);
-      setToolbarPosition(null);
-      window.getSelection()?.removeAllRanges();
-    }
-  };
 
   const handleAddNote = () => {
     if (!selectedText || !id || !toolbarPosition) return;
@@ -209,7 +157,7 @@ export const ContentPage = () => {
         color: 'yellow'
       });
       toast.success('Note added');
-      fetchContent();
+      refetch();
     } catch (error) {
       console.error('Failed to add note:', error);
       toast.error('Failed to add note');
@@ -228,7 +176,7 @@ export const ContentPage = () => {
     try {
       await contentService.deleteHighlight(deleteHighlightId);
       toast.success('Highlight removed');
-      fetchContent();
+      refetch();
     } catch (error) {
       console.error('Failed to delete highlight:', error);
       toast.error('Failed to delete highlight');
@@ -240,6 +188,11 @@ export const ContentPage = () => {
   const handleGenerateQuiz = () => {
     if (!content) return;
     
+    if (content.quizId) {
+      navigate(`/quiz/${content.quizId}`);
+      return;
+    }
+
     const maxContentLength = 5000;
     const contentText = content.content.length > maxContentLength 
       ? content.content.substring(0, maxContentLength) + '...'
@@ -250,7 +203,32 @@ export const ContentPage = () => {
         topic: content.topic, 
         contentText: contentText,
         sourceId: content.id,
-        sourceTitle: content.title
+        sourceTitle: content.title,
+        contentId: content.id
+      } 
+    });
+  };
+
+  const handleGenerateFlashcards = () => {
+    if (!content) return;
+
+    if (content.flashcardSetId) {
+      navigate(`/flashcards/${content.flashcardSetId}`);
+      return;
+    }
+
+    const maxContentLength = 5000;
+    const contentText = content.content.length > maxContentLength 
+      ? content.content.substring(0, maxContentLength) + '...'
+      : content.content;
+
+    navigate('/flashcards', { 
+      state: { 
+        topic: content.topic, 
+        contentText: contentText,
+        sourceId: content.id,
+        sourceTitle: content.title,
+        contentId: content.id
       } 
     });
   };
@@ -284,7 +262,9 @@ export const ContentPage = () => {
       
       toast.success('Content updated successfully!', { id: loadingToast });
       setIsEditing(false);
-      fetchContent();
+      refetch();
+      // Invalidate contents list to reflect changes
+      await queryClient.invalidateQueries({ queryKey: ['contents'] });
     } catch (error) {
       console.error('Failed to save content:', error);
       toast.error('Failed to save changes', { id: loadingToast });
@@ -304,6 +284,8 @@ export const ContentPage = () => {
     try {
       await contentService.delete(id);
       toast.success('Content deleted successfully!', { id: loadingToast });
+      // Invalidate contents list to remove deleted item
+      await queryClient.invalidateQueries({ queryKey: ['contents'] });
       navigate('/study');
     } catch (error) {
       console.error('Failed to delete content:', error);
@@ -313,7 +295,7 @@ export const ContentPage = () => {
     }
   };
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts - fixed dependencies
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isEditing) return;
@@ -331,7 +313,7 @@ export const ContentPage = () => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isEditing, editedTitle, editedContent]);
+  }, [isEditing]); // Only isEditing needed - handlers use latest values via closure
 
   // Helper function to apply highlights to markdown content
   const applyHighlights = (markdown: string, highlights: Highlight[]) => {
@@ -372,30 +354,22 @@ export const ContentPage = () => {
   }, [content]);
 
   // Handle note indicator clicks
-  useEffect(() => {
-    const handleNoteClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.classList.contains('note-indicator')) {
-        const noteText = target.getAttribute('data-note-text');
-        const noteId = target.getAttribute('data-note-id');
-        if (noteText) {
-          // Show note in a tooltip or modal
-          const rect = target.getBoundingClientRect();
-          setInlineNote({
-            id: noteId || undefined,
-            text: noteText,
-            position: { x: rect.left + rect.width / 2, y: rect.top - 10 + window.scrollY }
-          });
-        }
+  const handleContentClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.classList.contains('note-indicator')) {
+      const noteText = target.getAttribute('data-note-text');
+      const noteId = target.getAttribute('data-note-id');
+      if (noteText) {
+        // Show note in a tooltip or modal
+        const rect = target.getBoundingClientRect();
+        setInlineNote({
+          id: noteId || undefined,
+          text: noteText,
+          position: { x: rect.left + rect.width / 2, y: rect.top - 10 + window.scrollY }
+        });
       }
-    };
-
-    const contentElement = contentRef.current;
-    if (contentElement) {
-      contentElement.addEventListener('click', handleNoteClick);
-      return () => contentElement.removeEventListener('click', handleNoteClick);
     }
-  }, [content]);
+  };
 
 
   // Custom heading renderer to add IDs
@@ -451,13 +425,41 @@ export const ContentPage = () => {
           <div className="flex items-center gap-2">
              {!isEditing ? (
                 <>
-                  <button 
-                    onClick={handleGenerateQuiz}
-                    className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-sm text-sm font-medium"
-                  >
-                    <Brain className="w-4 h-4" />
-                    Generate Quiz
-                  </button>
+                  {content.quizId ? (
+                    <button 
+                      onClick={() => navigate(`/quiz/${content.quizId}`)}
+                      className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm text-sm font-medium"
+                    >
+                      <Brain className="w-4 h-4" />
+                      View Quiz
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={handleGenerateQuiz}
+                      className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-sm text-sm font-medium"
+                    >
+                      <Brain className="w-4 h-4" />
+                      Generate Quiz
+                    </button>
+                  )}
+
+                  {content.flashcardSetId ? (
+                    <button 
+                      onClick={() => navigate(`/flashcards/${content.flashcardSetId}`)}
+                      className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm text-sm font-medium"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      View Flashcards
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={handleGenerateFlashcards}
+                      className="hidden sm:flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm text-sm font-medium"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      Generate Flashcards
+                    </button>
+                  )}
                   <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1 hidden sm:block"></div>
                   <button 
                     onClick={handleEdit}
@@ -507,7 +509,7 @@ export const ContentPage = () => {
       <div className="flex gap-8 max-w-7xl mx-auto">
         {/* Main Content */}
         <div className="flex-1 min-w-0">
-          <div ref={contentRef} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 md:p-12 min-h-[500px]">
+          <div ref={contentRef} onClick={handleContentClick} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 md:p-12 min-h-[500px]">
             {isEditing ? (
               <div className="space-y-4">
                 <div>
@@ -646,7 +648,7 @@ export const ContentPage = () => {
             {(['yellow', 'green', 'pink'] as const).map((color) => (
               <button 
                 key={color}
-                onClick={() => setSelectedColor(color)}
+                onClick={() => { setSelectedColor(color); handleHighlight(color); }}
                 className={`w-6 h-6 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${
                   color === 'yellow' ? 'bg-yellow-400' : color === 'green' ? 'bg-green-400' : 'bg-pink-400'
                 } ${selectedColor === color ? 'ring-2 ring-white' : ''}`}
@@ -658,32 +660,13 @@ export const ContentPage = () => {
 
           <button onClick={() => handleHighlight()} className="p-2 hover:bg-gray-700 rounded-lg transition-colors flex flex-col items-center gap-0.5 min-w-[3rem]" title="Highlight">
             <Highlighter className="w-4 h-4" />
-            <span className="text-[10px] font-medium">Mark</span>
+            <span className="text-[10px] font-medium">Highlight</span>
           </button>
           
           <button onClick={handleAddNote} className="p-2 hover:bg-gray-700 rounded-lg transition-colors flex flex-col items-center gap-0.5 min-w-[3rem]" title="Add Note">
             <StickyNote className="w-4 h-4" />
             <span className="text-[10px] font-medium">Note</span>
           </button>
-
-          <div className="w-px h-6 bg-gray-700 mx-1"></div>
-          
-          {isCreating ? (
-            <div className="p-2 flex items-center justify-center min-w-[3rem]">
-              <Loader2 className="w-4 h-4 animate-spin" />
-            </div>
-          ) : (
-            <>
-              <button onClick={handleCreateFlashcard} className="p-2 hover:bg-gray-700 rounded-lg transition-colors flex flex-col items-center gap-0.5 min-w-[3rem]" title="Create Flashcard">
-                <BookOpen className="w-4 h-4" />
-                <span className="text-[10px] font-medium">Card</span>
-              </button>
-              <button onClick={handleCreateQuestion} className="p-2 hover:bg-gray-700 rounded-lg transition-colors flex flex-col items-center gap-0.5 min-w-[3rem]" title="Create Question">
-                <MessageSquare className="w-4 h-4" />
-                <span className="text-[10px] font-medium">Quiz</span>
-              </button>
-            </>
-          )}
         </div>
       )}
 

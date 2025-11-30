@@ -1,17 +1,32 @@
-import { apiClient } from "./api";
+import { apiClient, setCsrfToken } from "./api";
 import { AUTH_ENDPOINTS } from "../config/api";
-import type { AuthResponse, User } from "../types";
+import type { User } from "../types";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../config/firebase.config";
 
 export const authService = {
+  // Fetch CSRF token
+  fetchCsrfToken: async (): Promise<void> => {
+    try {
+      const response = await apiClient.get<{ csrfToken: string }>(
+        "/auth/csrf-token"
+      );
+      setCsrfToken(response.data.csrfToken);
+    } catch (error) {
+      console.error("Failed to fetch CSRF token", error);
+    }
+  },
+
   // Email/password login
-  login: async (email: string, password: string): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>(AUTH_ENDPOINTS.LOGIN, {
-      email,
-      password,
-    });
-    return response.data;
+  login: async (email: string, password: string): Promise<User> => {
+    const response = await apiClient.post<{ user: User }>(
+      AUTH_ENDPOINTS.LOGIN,
+      {
+        email,
+        password,
+      }
+    );
+    return response.data.user;
   },
 
   // Email/password signup
@@ -20,18 +35,21 @@ export const authService = {
     password: string,
     name: string,
     schoolName: string
-  ): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>(AUTH_ENDPOINTS.SIGNUP, {
-      email,
-      password,
-      name,
-      schoolName,
-    });
-    return response.data;
+  ): Promise<User> => {
+    const response = await apiClient.post<{ user: User }>(
+      AUTH_ENDPOINTS.SIGNUP,
+      {
+        email,
+        password,
+        name,
+        schoolName,
+      }
+    );
+    return response.data.user;
   },
 
   // Google Sign-In
-  googleSignIn: async (): Promise<AuthResponse> => {
+  googleSignIn: async (): Promise<User> => {
     try {
       // Sign in with Google using Firebase
       const result = await signInWithPopup(auth, googleProvider);
@@ -40,12 +58,12 @@ export const authService = {
       const idToken = await result.user.getIdToken();
 
       // Send the token to backend for verification
-      const response = await apiClient.post<AuthResponse>(
+      const response = await apiClient.post<{ user: User }>(
         AUTH_ENDPOINTS.GOOGLE_LOGIN,
         { idToken }
       );
 
-      return response.data;
+      return response.data.user;
     } catch (error: any) {
       console.error("Google sign-in error:", error);
       throw error;
@@ -61,24 +79,18 @@ export const authService = {
   // Logout
   logout: async (): Promise<void> => {
     await apiClient.post(AUTH_ENDPOINTS.LOGOUT);
-    localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
   },
 
-  // Save auth data
-  saveAuthData: (data: AuthResponse) => {
-    localStorage.setItem("accessToken", data.accessToken);
-    localStorage.setItem("user", JSON.stringify(data.user));
+  // Save auth data (only user info now)
+  saveAuthData: (user: User) => {
+    localStorage.removeItem("accessToken"); // Ensure token is removed if it exists
+    localStorage.setItem("user", JSON.stringify(user));
   },
 
   // Get stored user
   getStoredUser: (): User | null => {
     const userStr = localStorage.getItem("user");
     return userStr ? JSON.parse(userStr) : null;
-  },
-
-  // Get stored token
-  getStoredToken: (): string | null => {
-    return localStorage.getItem("accessToken");
   },
 };

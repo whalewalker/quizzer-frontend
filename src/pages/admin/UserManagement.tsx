@@ -11,11 +11,26 @@ import {
 import { adminService, type User } from '../../services/adminService';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import { Modal } from '../../components/Modal';
 
 export const UserManagement = () => {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [page, setPage] = useState(1);
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    confirmText?: string;
+    confirmColor?: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -34,8 +49,12 @@ export const UserManagement = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success('User status updated');
+      closeModal();
     },
-    onError: () => toast.error('Failed to update user status'),
+    onError: () => {
+      toast.error('Failed to update user status');
+      closeModal();
+    },
   });
 
   const deleteUserMutation = useMutation({
@@ -43,20 +62,38 @@ export const UserManagement = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success('User deleted');
+      closeModal();
     },
-    onError: () => toast.error('Failed to delete user'),
+    onError: () => {
+      toast.error('Failed to delete user');
+      closeModal();
+    },
   });
 
+  const closeModal = () => {
+    setModalConfig(prev => ({ ...prev, isOpen: false }));
+  };
+
   const handleStatusUpdate = (userId: string, isActive: boolean) => {
-    if (confirm(`Are you sure you want to ${isActive ? 'activate' : 'suspend'} this user?`)) {
-      updateStatusMutation.mutate({ userId, isActive });
-    }
+    setModalConfig({
+      isOpen: true,
+      title: isActive ? 'Activate User' : 'Suspend User',
+      message: `Are you sure you want to ${isActive ? 'activate' : 'suspend'} this user?`,
+      confirmText: isActive ? 'Activate' : 'Suspend',
+      confirmColor: isActive ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-600 hover:bg-yellow-700',
+      onConfirm: () => updateStatusMutation.mutate({ userId, isActive }),
+    });
   };
 
   const handleDelete = (userId: string) => {
-    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      deleteUserMutation.mutate(userId);
-    }
+    setModalConfig({
+      isOpen: true,
+      title: 'Delete User',
+      message: 'Are you sure you want to delete this user? This action cannot be undone.',
+      confirmText: 'Delete',
+      confirmColor: 'bg-red-600 hover:bg-red-700',
+      onConfirm: () => deleteUserMutation.mutate(userId),
+    });
   };
 
   return (
@@ -227,6 +264,31 @@ export const UserManagement = () => {
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        footer={
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={closeModal}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={modalConfig.onConfirm}
+              className={`rounded-lg px-4 py-2 text-sm font-medium text-white ${modalConfig.confirmColor || 'bg-primary-600 hover:bg-primary-700'}`}
+            >
+              {modalConfig.confirmText || 'Confirm'}
+            </button>
+          </div>
+        }
+      >
+        <p>{modalConfig.message}</p>
+      </Modal>
     </div>
   );
 };
+

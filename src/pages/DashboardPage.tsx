@@ -1,48 +1,34 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { gamificationService, leaderboardService, recommendationService } from '../services';
-import type { Streak, Recommendation, LeaderboardEntry } from '../types';
+import { useDashboardData } from '../hooks';
 import { Trophy, Brain, Flame, Zap, Crown, Medal, Star, TrendingUp, Sparkles, BookOpen, ArrowRight, Layers } from 'lucide-react';
 import { XPProgressBar } from '../components/XPProgressBar';
+import { StatCardSkeleton } from '../components/skeletons';
 
 export const DashboardPage = () => {
   const { user } = useAuth();
-  const [streak, setStreak] = useState<Streak | null>(null);
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading: loading } = useDashboardData();
 
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-
-  const loadDashboardData = async () => {
-    try {
-      const [gamificationData, leaderboardData, recommendationsData] = await Promise.all([
-        gamificationService.loadDashboardData(),
-        leaderboardService.getGlobal(),
-        recommendationService.getAll(),
-      ]);
-
-      setStreak(gamificationData.streak);
-      setLeaderboard(leaderboardData.entries.slice(0, 5));
-      setRecommendations(recommendationsData.slice(0, 3));
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const streak = useMemo(() => data?.streak ?? null, [data?.streak]);
+  const leaderboard = useMemo(() => data?.leaderboard ?? [], [data?.leaderboard]);
+  const recommendations = useMemo(() => data?.recommendations ?? [], [data?.recommendations]);
 
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-3 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your dashboard...</p>
+      <div className="space-y-6 pb-8">
+        <div className="card bg-primary-600 dark:bg-primary-900 p-6 md:p-8">
+          <div className="h-24" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StatCardSkeleton count={3} />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StatCardSkeleton count={3} />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <StatCardSkeleton count={2} />
         </div>
       </div>
     );

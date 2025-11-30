@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { analytics } from '../services/analytics.service';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { flashcardService } from '../services/flashcard.service';
-import type { FlashcardSet } from '../types';
 import { ChevronLeft, ChevronRight, RotateCw, ArrowLeft, Layers, Sparkles, BookOpen } from 'lucide-react';
+import { useFlashcardSet } from '../hooks';
 
 // Simple markdown renderer for bold text
 const renderMarkdown = (text: string) => {
@@ -15,57 +17,51 @@ const renderMarkdown = (text: string) => {
 export const FlashcardStudyPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [flashcardSet, setFlashcardSet] = useState<FlashcardSet | null>(null);
+  const { data: flashcardSet, isLoading: loading, error } = useFlashcardSet(id);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [cardResponses, setCardResponses] = useState<Array<{ cardIndex: number; response: 'know' | 'dont-know' | 'skipped' }>>([]);
   const [showResults, setShowResults] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
-    const loadFlashcardSet = async () => {
-      if (!id) return;
-      
-      try {
-        setLoading(true);
-        const set = await flashcardService.getById(id);
-        setFlashcardSet(set);
-      } catch (error: unknown) {
-        console.error('Failed to load flashcard set:', error);
-        toast.error('Failed to load flashcard set');
-        navigate('/flashcards');
-      } finally {
-        setLoading(false);
+    if (flashcardSet && user) {
+      analytics.trackFlashcardStudyStarted(flashcardSet.id, flashcardSet.title);
+      if (flashcardSet.cards.length > 0) {
+        analytics.trackFlashcardViewed(flashcardSet.id, '0'); // Use index 0
       }
-    };
+    }
+  }, [flashcardSet, user]);
 
-    loadFlashcardSet();
-  }, [id, navigate]);
+  if (error) {
+    toast.error('Failed to load flashcard set');
+    return <div className="text-center py-12">Failed to load flashcard set</div>;
+  }
 
   const handleNext = () => {
-    if (flashcardSet && currentCardIndex < flashcardSet.cards.length - 1) {
-      // Mark as skipped if no response yet
-      if (!cardResponses.some(r => r.cardIndex === currentCardIndex)) {
-        setCardResponses([...cardResponses, { cardIndex: currentCardIndex, response: 'skipped' }]);
-      }
-      setCurrentCardIndex(currentCardIndex + 1);
+    if (currentCardIndex < (flashcardSet?.cards.length || 0) - 1) {
+      const newIndex = currentCardIndex + 1;
+      setCurrentCardIndex(newIndex);
       setIsFlipped(false);
+      analytics.trackFlashcardViewed(flashcardSet!.id, newIndex.toString());
     } else if (flashcardSet && currentCardIndex === flashcardSet.cards.length - 1) {
       // Last card - finish session
       const hasResponse = cardResponses.some(r => r.cardIndex === currentCardIndex);
       if (hasResponse) {
         handleFinishSession(cardResponses);
       } else {
-        handleFinishSession([...cardResponses, { cardIndex: currentCardIndex, response: 'skipped' }]);
+        toast.error('Please rate how well you knew this card');
       }
     }
   };
 
   const handlePrevious = () => {
     if (currentCardIndex > 0) {
-      setCurrentCardIndex(currentCardIndex - 1);
+      const newIndex = currentCardIndex - 1;
+      setCurrentCardIndex(newIndex);
       setIsFlipped(false);
+      analytics.trackFlashcardViewed(flashcardSet!.id, newIndex.toString());
     }
   };
 
@@ -110,13 +106,11 @@ export const FlashcardStudyPage = () => {
     
     try {
       setSubmitting(true);
-      const result = await flashcardService.recordSession(id, responses);
+      await flashcardService.recordSession(id, responses);
       setShowResults(true);
       toast.success('Session completed! 🎉');
-      console.log('Session result:', result);
     } catch (error) {
       toast.error('Failed to save session');
-      console.error('Error saving session:', error);
     } finally {
       setSubmitting(false);
     }
@@ -153,7 +147,8 @@ export const FlashcardStudyPage = () => {
   const knowCount = cardResponses.filter(r => r.response === 'know').length;
   const dontKnowCount = cardResponses.filter(r => r.response === 'dont-know').length;
   const skippedCount = cardResponses.filter(r => r.response === 'skipped').length;
-  const totalScore = knowCount - dontKnowCount;
+  const totalCards = flashcardSet.cards.length;
+  const percentage = Math.round((knowCount / totalCards) * 100);
 
   // Show results screen
   if (showResults) {
@@ -174,8 +169,8 @@ export const FlashcardStudyPage = () => {
             <div className="flex items-center justify-center gap-4 mb-6">
               <div className="bg-white/20 backdrop-blur-sm rounded-full px-6 py-3 border-2 border-white/30">
                 <div className="flex flex-col items-center gap-1">
-                  <div className="text-5xl font-bold text-white">{totalScore}</div>
-                  <div className="text-sm text-emerald-100 dark:text-emerald-200 font-medium">Total Score</div>
+                  <div className="text-5xl font-bold text-white">{percentage}%</div>
+                  <div className="text-sm text-emerald-100 dark:text-emerald-200 font-medium">Score</div>
                 </div>
               </div>
             </div>

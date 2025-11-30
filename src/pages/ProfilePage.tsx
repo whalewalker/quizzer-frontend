@@ -1,29 +1,14 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { userService } from '../services';
-import type { UserProfile } from '../types';
+import { useProfile } from '../hooks';
 import { User, Mail, School, GraduationCap, Calendar, Brain, Layers, Flame, Trophy, Settings, Zap } from 'lucide-react';
 
 export const ProfilePage = () => {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: profile, isLoading: loading, error } = useProfile();
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
-    try {
-      const data = await userService.getProfile();
-      setProfile(data);
-    } catch (error) {
-      console.error('Error loading profile:', error);
-      toast.error('Failed to load profile');
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (error) {
+    toast.error('Failed to load profile');
+  }
 
   if (loading) {
     return (

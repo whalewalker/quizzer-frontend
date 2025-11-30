@@ -1,31 +1,11 @@
-import { useEffect, useState } from 'react';
-import { leaderboardService } from '../services';
-import type { Leaderboard } from '../types';
+import { useState } from 'react';
+import { useLeaderboard } from '../hooks';
 import { Trophy, Medal, Crown } from 'lucide-react';
+import { TableSkeleton } from '../components/skeletons';
 
 export const LeaderboardPage = () => {
   const [activeTab, setActiveTab] = useState<'global' | 'friends'>('global');
-  const [leaderboard, setLeaderboard] = useState<Leaderboard | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadLeaderboard();
-  }, [activeTab]);
-
-  const loadLeaderboard = async () => {
-    setLoading(true);
-    try {
-      const data =
-        activeTab === 'global'
-          ? await leaderboardService.getGlobal()
-          : await leaderboardService.getFriends();
-      setLeaderboard(data);
-    } catch (error) {
-      console.error('Error loading leaderboard:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: leaderboard, isLoading: loading } = useLeaderboard(activeTab);
 
   const getRankIcon = (rank: number) => {
     if (rank === 1) return <Crown className="w-6 h-6 text-yellow-500" />;
@@ -84,8 +64,8 @@ export const LeaderboardPage = () => {
       </div>
 
       {loading ? (
-        <div className="card dark:bg-gray-800 flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="card dark:bg-gray-800">
+          <TableSkeleton rows={10} columns={3} />
         </div>
       ) : (
         <div className="card dark:bg-gray-800">

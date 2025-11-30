@@ -2,98 +2,84 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { quizService } from '../services/quiz.service';
-import type { Quiz, QuizResult, Streak, AnswerValue } from '../types';
+import type { QuizResult, Streak, AnswerValue } from '../types';
 import { ArrowLeft, CheckCircle, XCircle, Brain, Trophy, Target, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { XPProgressBar } from '../components/XPProgressBar';
 import { QuestionRenderer } from '../components/QuestionRenderer';
+import { useQuiz } from '../hooks';
+import { analytics } from '../services/analytics.service';
 
 export const QuizTakePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const { data: quiz, isLoading: loading, error } = useQuiz(id);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<(AnswerValue | null)[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [result, setResult] = useState<QuizResult | null>(null);
   const [streak, setStreak] = useState<Streak | null>(null);
-  const [loading, setLoading] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
 
   // Get localStorage key for this quiz
   const getStorageKey = (key: string) => `quiz_${id}_${key}`;
 
+  // Handle errors
+  if (error) {
+    toast.error('Failed to load quiz');
+    navigate('/quiz');
+  }
+
+  // Restore state from localStorage when quiz loads
   useEffect(() => {
-    const loadQuiz = async () => {
-      if (!id) return;
+    if (!quiz || !id) return;
 
-      try {
-        setLoading(true);
-        const loadedQuiz = await quizService.getById(id);
-        setQuiz(loadedQuiz);
-        
-        // Try to restore saved state from localStorage
-        const savedAnswers = localStorage.getItem(getStorageKey('answers'));
-        const savedQuestionIndex = localStorage.getItem(getStorageKey('questionIndex'));
-        const savedTimeRemaining = localStorage.getItem(getStorageKey('timeRemaining'));
-        const savedTimestamp = localStorage.getItem(getStorageKey('timestamp'));
-        
-        if (savedAnswers) {
-          try {
-            const parsedAnswers = JSON.parse(savedAnswers);
-            if (Array.isArray(parsedAnswers) && parsedAnswers.length === loadedQuiz.questions.length) {
-              setSelectedAnswers(parsedAnswers);
-            } else {
-              setSelectedAnswers(new Array(loadedQuiz.questions.length).fill(null));
-            }
-          } catch {
-            setSelectedAnswers(new Array(loadedQuiz.questions.length).fill(null));
-          }
-        } else {
-          setSelectedAnswers(new Array(loadedQuiz.questions.length).fill(null));
-        }
-        
-        if (savedQuestionIndex) {
-          const index = parseInt(savedQuestionIndex, 10);
-          if (!isNaN(index) && index >= 0 && index < loadedQuiz.questions.length) {
-            setCurrentQuestionIndex(index);
-          }
-        }
-        
-        // Initialize or restore timer for timed quizzes
-        if (loadedQuiz.quizType === 'timed' && loadedQuiz.timeLimit) {
-          if (savedTimeRemaining && savedTimestamp) {
-            const timeRemaining = parseInt(savedTimeRemaining, 10);
-            const timestamp = parseInt(savedTimestamp, 10);
-            const now = Date.now();
-            const elapsedSeconds = Math.floor((now - timestamp) / 1000);
-            const adjustedTime = Math.max(0, timeRemaining - elapsedSeconds);
-            setTimeRemaining(adjustedTime);
-          } else {
-            setTimeRemaining(loadedQuiz.timeLimit);
-          }
-        }
-      } catch (error) {
-        toast.error('Failed to load quiz');
-        navigate('/quiz');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadQuiz();
-  }, [id, navigate]);
-
-  // Save state to localStorage whenever it changes
-  useEffect(() => {
-    if (!id || !quiz || showResults) return;
+    // Try to restore saved state from localStorage
+    const savedAnswers = localStorage.getItem(getStorageKey('answers'));
+    const savedQuestionIndex = localStorage.getItem(getStorageKey('questionIndex'));
+    const savedTimeRemaining = localStorage.getItem(getStorageKey('timeRemaining'));
+    const savedTimestamp = localStorage.getItem(getStorageKey('timestamp'));
     
-    localStorage.setItem(getStorageKey('answers'), JSON.stringify(selectedAnswers));
-    localStorage.setItem(getStorageKey('questionIndex'), currentQuestionIndex.toString());
-    if (timeRemaining !== null) {
-      localStorage.setItem(getStorageKey('timeRemaining'), timeRemaining.toString());
-      localStorage.setItem(getStorageKey('timestamp'), Date.now().toString());
+    if (savedAnswers) {
+      try {
+        const parsedAnswers = JSON.parse(savedAnswers);
+        if (Array.isArray(parsedAnswers) && parsedAnswers.length === quiz.questions.length) {
+          setSelectedAnswers(parsedAnswers);
+        } else {
+          setSelectedAnswers(new Array(quiz.questions.length).fill(null));
+        }
+      } catch {
+        setSelectedAnswers(new Array(quiz.questions.length).fill(null));
+      }
+    } else {
+      setSelectedAnswers(new Array(quiz.questions.length).fill(null));
     }
-  }, [id, quiz, selectedAnswers, currentQuestionIndex, timeRemaining, showResults]);
+    
+    if (savedQuestionIndex) {
+      const index = parseInt(savedQuestionIndex, 10);
+      if (!isNaN(index) && index >= 0 && index < quiz.questions.length) {
+        setCurrentQuestionIndex(index);
+      }
+    }
+    
+    // Initialize or restore timer for timed quizzes
+    if (quiz.quizType === 'timed' && quiz.timeLimit) {
+      if (savedTimeRemaining && savedTimestamp) {
+        const timeRemaining = parseInt(savedTimeRemaining, 10);
+        const timestamp = parseInt(savedTimestamp, 10);
+        const now = Date.now();
+        const elapsedSeconds = Math.floor((now - timestamp) / 1000);
+        const adjustedTime = Math.max(0, timeRemaining - elapsedSeconds);
+        setTimeRemaining(adjustedTime);
+      } else {
+        setTimeRemaining(quiz.timeLimit);
+      }
+    }
+
+    // Track quiz attempt started
+    analytics.trackQuizAttemptStarted(quiz.id, quiz.title);
+  }, [quiz, id]);
+
+
 
   // Timer effect for timed quizzes
   useEffect(() => {
@@ -106,7 +92,11 @@ export const QuizTakePage = () => {
           handleSubmit(true);
           return 0;
         }
-        return prev - 1;
+        const newTime = prev - 1;
+        // Save time to localStorage
+        localStorage.setItem(getStorageKey('timeRemaining'), newTime.toString());
+        localStorage.setItem(getStorageKey('timestamp'), Date.now().toString());
+        return newTime;
       });
     }, 1000);
 
@@ -146,17 +136,23 @@ export const QuizTakePage = () => {
     const newAnswers = [...selectedAnswers];
     newAnswers[currentQuestionIndex] = answer;
     setSelectedAnswers(newAnswers);
+    // Save to localStorage
+    localStorage.setItem(getStorageKey('answers'), JSON.stringify(newAnswers));
   };
 
   const handleNext = () => {
     if (quiz && currentQuestionIndex < quiz.questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      const newIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(newIndex);
+      localStorage.setItem(getStorageKey('questionIndex'), newIndex.toString());
     }
   };
 
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      const newIndex = currentQuestionIndex - 1;
+      setCurrentQuestionIndex(newIndex);
+      localStorage.setItem(getStorageKey('questionIndex'), newIndex.toString());
     }
   };
 
@@ -184,6 +180,9 @@ export const QuizTakePage = () => {
       localStorage.removeItem(getStorageKey('timestamp'));
       
       toast.success(force ? 'Time is up! Quiz submitted.' : 'Quiz submitted successfully!');
+      // Calculate duration if possible, otherwise 0
+      const duration = quiz.timeLimit && timeRemaining !== null ? quiz.timeLimit - timeRemaining : 0;
+      analytics.trackQuizAttemptCompleted(id, submissionResult.score, submissionResult.totalQuestions, duration);
     } catch (error) {
       toast.error('Failed to submit quiz. Please try again.');
     }

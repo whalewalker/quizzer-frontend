@@ -28,6 +28,7 @@ export const flashcardService = {
     // Add other fields
     if (request.topic) formData.append("topic", request.topic);
     if (request.content) formData.append("content", request.content);
+    if (request.contentId) formData.append("contentId", request.contentId);
     formData.append("numberOfCards", request.numberOfCards.toString());
 
     const response = await apiClient.post<{ jobId: string; status: string }>(
@@ -45,7 +46,7 @@ export const flashcardService = {
   // Check job status
   getJobStatus: async (jobId: string): Promise<FlashcardJobStatus> => {
     const response = await apiClient.get<FlashcardJobStatus>(
-      `/flashcard/status/${jobId}`
+      `/flashcards/status/${jobId}`
     );
     return response.data;
   },
@@ -53,31 +54,58 @@ export const flashcardService = {
   // Poll for flashcard completion
   pollForCompletion: async (
     jobId: string,
+    onProgress?: (progress: number) => void,
     maxAttempts = 60
   ): Promise<FlashcardSet | null> => {
     let attempts = 0;
+    let jobFound = false;
 
     while (attempts < maxAttempts) {
-      const status = await flashcardService.getJobStatus(jobId);
+      try {
+        const status = await flashcardService.getJobStatus(jobId);
+        jobFound = true; // Mark that we successfully found the job at least once
 
-      if (status.status === "completed") {
-        // Check if result exists and extract flashcardSet
-        if (status.result && typeof status.result === "object") {
-          const result = status.result as any;
-          if (result.flashcardSet) {
-            return result.flashcardSet;
-          }
+        // Update progress if available
+        if (status.progress && onProgress) {
+          // Progress can be a number or an object depending on implementation
+          const progressValue =
+            typeof status.progress === "number"
+              ? status.progress
+              : status.progress.percent || 0;
+          onProgress(progressValue);
         }
-        // Job completed successfully, return null to indicate success without direct result
-        return null;
+
+        if (status.status === "completed") {
+          if (onProgress) onProgress(100);
+
+          // Check if result exists and extract flashcardSet
+          if (status.result && typeof status.result === "object") {
+            const result = status.result as any;
+            if (result.flashcardSet) {
+              return result.flashcardSet;
+            }
+          }
+          // Job completed successfully, return null to indicate success without direct result
+          return null;
+        }
+
+        if (status.status === "failed") {
+          throw new Error(status.error || "Flashcard generation failed");
+        }
+      } catch (error: any) {
+        // Handle 404: If job was previously found, it might have been completed and removed
+        if (error?.response?.status === 404 && jobFound) {
+          if (onProgress) onProgress(100);
+          return null; // Assume success if it was running and now gone
+        }
+        // If never found or other error, rethrow
+        if (error?.response?.status !== 404) {
+          throw error;
+        }
       }
 
-      if (status.status === "failed") {
-        throw new Error(status.error || "Flashcard generation failed");
-      }
-
-      // Wait 1 second before next poll
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Wait 5 seconds before next poll
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       attempts++;
     }
 

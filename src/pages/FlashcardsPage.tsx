@@ -1,50 +1,113 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { flashcardService } from '../services/flashcard.service';
-import type { FlashcardSet, FlashcardGenerateRequest } from '../types';
+import type { FlashcardGenerateRequest } from '../types';
 import { CreditCard, Plus, Sparkles, Layers, BookOpen, X } from 'lucide-react';
 import { FlashcardGenerator } from '../components/FlashcardGenerator';
 import { FlashcardSetList } from '../components/FlashcardSetList';
 import { Modal } from '../components/Modal';
+import { useFlashcardSets } from '../hooks';
+import { CardSkeleton, StatCardSkeleton } from '../components/skeletons';
+import { ProgressToast } from '../components/ProgressToast';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const FlashcardsPage = () => {
+  const queryClient = useQueryClient();
+  const location = useLocation();
   const [showGenerator, setShowGenerator] = useState(false);
-  const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);
+  const { data: flashcardSets = [], isLoading } = useFlashcardSets();
   const [loading, setLoading] = useState(false);
   const [deleteSetId, setDeleteSetId] = useState<string | null>(null);
+  const [initialValues, setInitialValues] = useState<{ 
+    topic?: string; 
+    content?: string; 
+    mode?: 'topic' | 'content' | 'files';
+    contentId?: string;
+  } | undefined>(undefined);
 
   useEffect(() => {
-    const loadFlashcardSets = async () => {
-      try {
-        const sets = await flashcardService.getAll();
-        setFlashcardSets(sets);
-      } catch (error) {
-        // Silently fail on initial load
+    if (location.state) {
+      const { topic, contentText, contentId } = location.state as { 
+        topic?: string; 
+        contentText?: string;
+        contentId?: string;
+      };
+      
+      if (topic || contentText) {
+        setInitialValues({
+          topic,
+          content: contentText,
+          mode: contentText ? 'content' : 'topic',
+          contentId
+        });
+        setShowGenerator(true);
       }
-    };
-
-    loadFlashcardSets();
-  }, []);
+    }
+  }, [location.state]);
 
   const handleGenerate = async (request: FlashcardGenerateRequest, files?: File[]) => {
     setLoading(true);
-    const loadingToast = toast.loading('Generating your flashcards...');
+    setShowGenerator(false); // Hide generator immediately so user can see toast
     
+    // Show initial toast
+    const toastId = toast.custom((t) => (
+      <ProgressToast
+        t={t}
+        title="Generating Flashcards"
+        message="Starting generation..."
+        progress={0}
+        status="processing"
+      />
+    ), { duration: Infinity });
+
     try {
       // Start generation
       const { jobId } = await flashcardService.generate(request, files);
       
-      // Poll for completion
-      await flashcardService.pollForCompletion(jobId);
+      // Poll for completion with progress updates
+      await flashcardService.pollForCompletion(jobId, (p) => {
+        toast.custom((t) => (
+          <ProgressToast
+            t={t}
+            title="Generating Flashcards"
+            message={`Processing content... ${Math.round(p)}%`}
+            progress={p}
+            status="processing"
+          />
+        ), { id: toastId });
+      });
       
       // Refresh the flashcard list to get the latest sets
-      const sets = await flashcardService.getAll();
-      setFlashcardSets(sets);
+      await queryClient.invalidateQueries({ queryKey: ['flashcardSets'] });
+
+      // If generated from content, invalidate content query to update flashcardSetId
+      if (initialValues?.contentId) {
+        await queryClient.invalidateQueries({ queryKey: ['content', initialValues.contentId] });
+      }
       
-      setShowGenerator(false);
-      toast.success('Flashcards generated successfully!', { id: loadingToast });
+      // Success toast
+      toast.custom((t) => (
+        <ProgressToast
+          t={t}
+          title="Success!"
+          message="Flashcards generated successfully."
+          progress={100}
+          status="success"
+        />
+      ), { id: toastId, duration: 4000 });
+
     } catch (error) {
-      toast.error('Failed to generate flashcards. Please try again.', { id: loadingToast });
+      // Error toast
+      toast.custom((t) => (
+        <ProgressToast
+          t={t}
+          title="Generation Failed"
+          message="Failed to generate flashcards. Please try again."
+          progress={0}
+          status="error"
+        />
+      ), { id: toastId, duration: 5000 });
     } finally {
       setLoading(false);
     }
@@ -62,8 +125,7 @@ export const FlashcardsPage = () => {
       await flashcardService.delete(deleteSetId);
       
       // Refresh the flashcard list
-      const sets = await flashcardService.getAll();
-      setFlashcardSets(sets);
+      await queryClient.invalidateQueries({ queryKey: ['flashcardSets'] });
       
       toast.success('Flashcard set deleted successfully!', { id: loadingToast });
     } catch (error) {
@@ -115,41 +177,47 @@ export const FlashcardsPage = () => {
       </header>
 
       {/* Stats Overview */}
-      {totalSets > 0 && (
+      {(isLoading || totalSets > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="card p-4 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-800 dark:to-gray-800 border-emerald-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500">
-                <Layers className="w-6 h-6 text-white" />
+          {isLoading ? (
+            <StatCardSkeleton count={3} />
+          ) : (
+            <>
+              <div className="card p-4 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-800 dark:to-gray-800 border-emerald-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500">
+                    <Layers className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalSets}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Sets</p>
+                  </div>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalSets}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Sets</p>
+              <div className="card p-4 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-gray-800 dark:to-gray-800 border-cyan-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500">
+                    <CreditCard className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalCards}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Cards</p>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-          <div className="card p-4 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-gray-800 dark:to-gray-800 border-cyan-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500">
-                <CreditCard className="w-6 h-6 text-white" />
+              <div className="card p-4 bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-gray-800 dark:to-gray-800 border-teal-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-500">
+                    <BookOpen className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{studiedSets}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Studied Sets</p>
+                  </div>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalCards}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Cards</p>
-              </div>
-            </div>
-          </div>
-          <div className="card p-4 bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-gray-800 dark:to-gray-800 border-teal-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-500">
-                <BookOpen className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{studiedSets}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Studied Sets</p>
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       )}
 
@@ -161,11 +229,17 @@ export const FlashcardsPage = () => {
           >
             <X className="w-5 h-5" />
           </button>
-          <FlashcardGenerator onGenerate={handleGenerate} loading={loading} />
+          <FlashcardGenerator onGenerate={handleGenerate} loading={loading} initialValues={initialValues} />
         </div>
       )}
 
-      <FlashcardSetList sets={flashcardSets} onDelete={handleDelete} />
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <CardSkeleton count={6} />
+        </div>
+      ) : (
+        <FlashcardSetList sets={flashcardSets} onDelete={handleDelete} />
+      )}
 
       <Modal
         isOpen={!!deleteSetId}
@@ -190,6 +264,7 @@ export const FlashcardsPage = () => {
       >
         <p>Are you sure you want to delete this flashcard set? This action cannot be undone.</p>
       </Modal>
+
     </div>
   );
 };

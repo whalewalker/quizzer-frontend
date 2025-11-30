@@ -1,55 +1,86 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useSyncExternalStore, useMemo, useCallback } from 'react';
 import type { User } from '../types';
 import { authService } from '../services/auth.service';
+import { analytics } from '../services/analytics.service';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (user: User, token: string) => void;
+  login: (user: User) => void;
   logout: () => void;
   isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// External store for auth state
+let authState = {
+  user: null as User | null,
+  loading: true,
+};
+
+const listeners = new Set<() => void>();
+
+const authStore = {
+  subscribe(listener: () => void) {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  },
+  getSnapshot() {
+    return authState;
+  },
+  setState(newState: Partial<typeof authState>) {
+    authState = { ...authState, ...newState };
+    listeners.forEach(listener => listener());
+  },
+};
+
+// Initialize auth state from storage and fetch CSRF token
+const initializeAuth = async () => {
+  await authService.fetchCsrfToken();
+  const storedUser = authService.getStoredUser();
+  if (storedUser) {
+    authStore.setState({ user: storedUser, loading: false });
+  } else {
+    authStore.setState({ loading: false });
+  }
+};
+
+initializeAuth();
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const state = useSyncExternalStore(
+    authStore.subscribe,
+    authStore.getSnapshot,
+    authStore.getSnapshot
+  );
 
-  useEffect(() => {
-    // Check for stored auth data on mount
-    const storedUser = authService.getStoredUser();
-    const storedToken = authService.getStoredToken();
-
-    if (storedUser && storedToken) {
-      setUser(storedUser);
-    }
-    setLoading(false);
+  const login = useCallback((userData: User) => {
+    authStore.setState({ user: userData });
+    authService.saveAuthData(userData);
+    analytics.identify(userData.id);
+    analytics.trackAuthLogin('email', true);
   }, []);
 
-  const login = (userData: User, token: string) => {
-    setUser(userData);
-    authService.saveAuthData({ user: userData, accessToken: token });
-  };
-
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await authService.logout();
     } catch (error) {
       console.error('Logout error:', error);
     }
-    setUser(null);
-  };
+    authStore.setState({ user: null });
+    analytics.reset();
+  }, []);
 
-  const value = {
-    user,
-    loading,
+  const value = useMemo(() => ({
+    user: state.user,
+    loading: state.loading,
     login,
     logout,
-    isAuthenticated: !!user,
-  };
+    isAuthenticated: !!state.user,
+  }), [state.user, state.loading, login, logout]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

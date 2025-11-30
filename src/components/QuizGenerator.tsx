@@ -11,6 +11,7 @@ interface QuizGeneratorProps {
     mode?: 'topic' | 'content' | 'files';
     sourceId?: string;
     sourceTitle?: string;
+    contentId?: string;
   };
 }
 
@@ -67,6 +68,7 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
       quizType,
       timeLimit: quizType === 'timed' ? timeLimit : undefined,
       questionTypes: selectedQuestionTypes.length > 0 ? selectedQuestionTypes : undefined,
+      contentId: initialValues?.contentId
     };
 
     if (mode === 'topic' && topic.trim()) {

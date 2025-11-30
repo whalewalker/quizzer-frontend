@@ -2,34 +2,40 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { quizService } from '../services/quiz.service';
-import type { Quiz, QuizGenerateRequest } from '../types';
+import type { QuizGenerateRequest } from '../types';
 import { Brain, Plus, Sparkles, Target, CheckCircle, X, History } from 'lucide-react';
 import { QuizGenerator } from '../components/QuizGenerator';
 import { QuizList } from '../components/QuizList';
 import { Modal } from '../components/Modal';
+import { CardSkeleton, StatCardSkeleton } from '../components/skeletons';
+import { ProgressToast } from '../components/ProgressToast';
+import { useQuizzes } from '../hooks';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const QuizPage = () => {
+  const queryClient = useQueryClient();
   const location = useLocation();
   const navigate = useNavigate();
   const [showGenerator, setShowGenerator] = useState(false);
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { data: quizzes = [], isLoading: loading } = useQuizzes();
   const [initialValues, setInitialValues] = useState<{ 
     topic?: string; 
     content?: string; 
     mode?: 'topic' | 'content' | 'files';
     sourceId?: string;
     sourceTitle?: string;
+    contentId?: string;
   } | undefined>(undefined);
   const [deleteQuizId, setDeleteQuizId] = useState<string | null>(null);
 
   useEffect(() => {
     if (location.state) {
-      const { topic, contentText, sourceId, sourceTitle } = location.state as { 
+      const { topic, contentText, sourceId, sourceTitle, contentId } = location.state as { 
         topic?: string; 
         contentText?: string;
         sourceId?: string;
         sourceTitle?: string;
+        contentId?: string;
       };
       
       if (topic || contentText) {
@@ -38,47 +44,75 @@ export const QuizPage = () => {
           content: contentText,
           mode: contentText ? 'content' : 'topic',
           sourceId,
-          sourceTitle
+          sourceTitle,
+          contentId
         });
         setShowGenerator(true);
       }
     }
   }, [location.state]);
 
-  useEffect(() => {
-    const loadQuizzes = async () => {
-      try {
-        const allQuizzes = await quizService.getAll();
-        setQuizzes(allQuizzes);
-      } catch (error) {
-        // Silently fail on initial load
-      }
-    };
-
-    loadQuizzes();
-  }, []);
-
   const handleGenerate = async (request: QuizGenerateRequest, files?: File[]) => {
-    setLoading(true);
-    const loadingToast = toast.loading('Generating your quiz...');
+    setShowGenerator(false); // Hide generator immediately
+    
+    // Show initial toast
+    const toastId = toast.custom((t) => (
+      <ProgressToast
+        t={t}
+        title="Generating Quiz"
+        message="Starting generation..."
+        progress={0}
+        status="processing"
+      />
+    ), { duration: Infinity });
     
     try {
       // Start generation
       const { jobId } = await quizService.generate(request, files);
       
-      // Poll for completion
-      await quizService.pollForCompletion(jobId);
+      // Poll for completion with progress updates
+      await quizService.pollForCompletion(jobId, (p) => {
+        toast.custom((t) => (
+          <ProgressToast
+            t={t}
+            title="Generating Quiz"
+            message={`Crafting questions... ${Math.round(p)}%`}
+            progress={p}
+            status="processing"
+          />
+        ), { id: toastId });
+      });
       
       // Refresh the quiz list to get the latest quizzes
-      const allQuizzes = await quizService.getAll();
-      setQuizzes(allQuizzes);
+      await queryClient.invalidateQueries({ queryKey: ['quizzes'] });
+
+      // If generated from content, invalidate content query to update quizId
+      if (initialValues?.contentId) {
+        await queryClient.invalidateQueries({ queryKey: ['content', initialValues.contentId] });
+      }
       
-      setShowGenerator(false);
-      toast.success('Quiz generated successfully!', { id: loadingToast });
+      // Success toast
+      toast.custom((t) => (
+        <ProgressToast
+          t={t}
+          title="Success!"
+          message="Quiz generated successfully."
+          progress={100}
+          status="success"
+        />
+      ), { id: toastId, duration: 4000 });
+
     } catch (error) {
-      toast.error('Failed to generate quiz. Please try again.', { id: loadingToast });
-    } finally {
-      setLoading(false);
+      // Error toast
+      toast.custom((t) => (
+        <ProgressToast
+          t={t}
+          title="Generation Failed"
+          message="Failed to generate quiz. Please try again."
+          progress={0}
+          status="error"
+        />
+      ), { id: toastId, duration: 5000 });
     }
   };
 
@@ -94,8 +128,7 @@ export const QuizPage = () => {
       await quizService.delete(deleteQuizId);
       
       // Refresh the quiz list
-      const allQuizzes = await quizService.getAll();
-      setQuizzes(allQuizzes);
+      await queryClient.invalidateQueries({ queryKey: ['quizzes'] });
       
       toast.success('Quiz deleted successfully!', { id: loadingToast });
     } catch (error) {
@@ -147,42 +180,48 @@ export const QuizPage = () => {
       </header>
 
       {/* Stats Overview */}
-      {totalQuizzes > 0 && (
+      {(loading || totalQuizzes > 0) && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="card p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
-              <div className="flex items-center justify-between">
-                <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500">
-                  <Brain className="w-6 h-6 text-white" />
+            {loading ? (
+              <StatCardSkeleton count={3} />
+            ) : (
+              <>
+                <div className="card p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500">
+                      <Brain className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalQuizzes}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Quizzes</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalQuizzes}</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Quizzes</p>
+                <div className="card p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
+                      <Target className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalQuestions}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Questions Created</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div className="card p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800">
-              <div className="flex items-center justify-between">
-                <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
-                  <Target className="w-6 h-6 text-white" />
+                <div className="card p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500">
+                      <CheckCircle className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">{completedQuizzes}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Completed</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalQuestions}</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Questions Created</p>
-                </div>
-              </div>
-            </div>
-            <div className="card p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
-              <div className="flex items-center justify-between">
-                <div className="flex-shrink-0 p-3 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500">
-                  <CheckCircle className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{completedQuizzes}</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Completed</p>
-                </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
           
           {/* View All Attempts Button */}
@@ -208,7 +247,13 @@ export const QuizPage = () => {
         </div>
       )}
 
-      <QuizList quizzes={quizzes} onDelete={handleDelete} />
+      {loading && quizzes.length === 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <CardSkeleton count={6} />
+        </div>
+      ) : (
+        <QuizList quizzes={quizzes} onDelete={handleDelete} />
+      )}
 
       <Modal
         isOpen={!!deleteQuizId}
@@ -233,6 +278,7 @@ export const QuizPage = () => {
       >
         <p>Are you sure you want to delete this quiz? This action cannot be undone.</p>
       </Modal>
+
     </div>
   );
 };
