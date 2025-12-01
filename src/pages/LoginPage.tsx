@@ -1,22 +1,37 @@
-import { useState, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useCallback, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { analytics } from '../services/analytics.service';
 import { authService } from '../services/auth.service';
-import { Mail, Lock, ArrowRight, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const state = location.state as { message?: string };
+    if (state?.message) {
+      setSuccessMessage(state.message);
+      // Clear the message from location state
+      window.history.replaceState({}, document.title);
+      // Auto-hide success message after 5 seconds
+      const timer = setTimeout(() => setSuccessMessage(''), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [location]);
 
   const handleGoogleSignIn = useCallback(async () => {
     setError('');
+    setSuccessMessage('');
     setGoogleLoading(true);
 
     try {
@@ -40,6 +55,7 @@ export const LoginPage = () => {
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     setLoading(true);
 
     try {
@@ -115,7 +131,10 @@ export const LoginPage = () => {
           <form 
             onSubmit={handleSubmit} 
             className="space-y-4"
-            onClick={() => error && setError('')}
+            onClick={() => {
+              if (error) setError('');
+              if (successMessage) setSuccessMessage('');
+            }}
           >
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
@@ -162,6 +181,17 @@ export const LoginPage = () => {
                 </button>
               </div>
             </div>
+
+            {successMessage && (
+              <div 
+                className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg animate-fade-in flex items-start gap-3"
+                role="alert"
+                aria-live="polite"
+              >
+                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-green-600 dark:text-green-400 font-medium">{successMessage}</p>
+              </div>
+            )}
 
             {error && (
               <div 

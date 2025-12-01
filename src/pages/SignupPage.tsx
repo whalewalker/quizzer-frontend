@@ -1,76 +1,34 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import { analytics } from '../services/analytics.service';
 import { authService } from '../services/auth.service';
-import { schoolService } from '../services/school.service';
-import type { School } from '../services/school.service';
-import { Mail, Lock, User, ArrowRight, Eye, EyeOff, AlertCircle, School as SchoolIcon, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 export const SignupPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [schoolName, setSchoolName] = useState('');
-  const [schoolSuggestions, setSchoolSuggestions] = useState<School[]>([]);
-  const [showSchoolSuggestions, setShowSchoolSuggestions] = useState(false);
-  const [isSearchingSchool, setIsSearchingSchool] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
-  const schoolInputRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (schoolInputRef.current && !schoolInputRef.current.contains(event.target as Node)) {
-        setShowSchoolSuggestions(false);
-      }
-    };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const handleSchoolSearch = async (query: string) => {
-    setSchoolName(query);
-    if (query.length >= 2) {
-      setIsSearchingSchool(true);
-      try {
-        const results = await schoolService.searchSchools(query);
-        setSchoolSuggestions(results);
-        setShowSchoolSuggestions(true);
-      } catch (err) {
-
-      } finally {
-        setIsSearchingSchool(false);
-      }
-    } else {
-      setSchoolSuggestions([]);
-      setShowSchoolSuggestions(false);
-    }
-  };
-
-  const selectSchool = (school: School) => {
-    setSchoolName(school.name);
-    setShowSchoolSuggestions(false);
-  };
 
   const handleGoogleSignUp = async () => {
     setError('');
     setGoogleLoading(true);
 
     try {
-      const user = await authService.googleSignIn();
-      login(user);
-      // Redirect to onboarding for new users
-      navigate('/onboarding');
+      await authService.googleSignIn();
+      analytics.trackAuthSignup('google', true);
+      // Redirect to login page after successful signup
+      navigate('/login', { state: { message: 'Account created successfully! Please sign in.' } });
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Google sign-up failed. Please try again.');
+      const errorMessage = err.response?.data?.message || 'Google sign-up failed. Please try again.';
+      setError(errorMessage);
+      analytics.trackAuthSignup('google', false, errorMessage);
     } finally {
       setGoogleLoading(false);
     }
@@ -82,12 +40,10 @@ export const SignupPage = () => {
     setLoading(true);
 
     try {
-      await authService.signup(email, password, name, schoolName);
+      await authService.signup(email, password, name);
       analytics.trackAuthSignup('email', true);
-      // Login automatically after signup
-      await login({ email, password } as any);
-      // Redirect to onboarding for new users
-      navigate('/onboarding');
+      // Redirect to login page after successful signup
+      navigate('/login', { state: { message: 'Account created successfully! Please sign in.' } });
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to create account';
       setError(errorMessage);
@@ -168,42 +124,7 @@ export const SignupPage = () => {
               </div>
             </div>
 
-            <div>
-              <label htmlFor="school" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">School Name (Optional)</label>
-              <div className="relative" ref={schoolInputRef}>
-                <SchoolIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                <input
-                  id="school"
-                  type="text"
-                  value={schoolName}
-                  onChange={(e) => handleSchoolSearch(e.target.value)}
-                  onFocus={() => schoolName.length >= 2 && setShowSchoolSuggestions(true)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-                  placeholder="Enter your school name"
-                />
-                {isSearchingSchool && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                  </div>
-                )}
-                
-                {/* School Suggestions Dropdown */}
-                {showSchoolSuggestions && schoolSuggestions.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {schoolSuggestions.map((school) => (
-                      <button
-                        key={school.id}
-                        type="button"
-                        onClick={() => selectSchool(school)}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white text-sm transition-colors"
-                      >
-                        {school.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>

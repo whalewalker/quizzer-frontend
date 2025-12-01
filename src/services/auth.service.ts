@@ -31,8 +31,7 @@ export const authService = {
   signup: async (
     email: string,
     password: string,
-    name: string,
-    schoolName: string
+    name: string
   ): Promise<User> => {
     const response = await apiClient.post<{ user: User }>(
       AUTH_ENDPOINTS.SIGNUP,
@@ -40,7 +39,6 @@ export const authService = {
         email,
         password,
         name,
-        schoolName,
       }
     );
     return response.data.user;
