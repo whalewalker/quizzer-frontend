@@ -79,4 +79,61 @@ export const adminService = {
     const response = await api.get("/admin/content", { params: filter });
     return response.data;
   },
+
+  getReportedContent: async () => {
+    const response = await api.get("/admin/content/reports");
+    return response.data;
+  },
+
+  moderateContent: async (
+    id: string,
+    action: "DELETE" | "HIDE" | "IGNORE",
+    reason?: string
+  ) => {
+    const response = await api.post(`/admin/content/${id}/moderate`, {
+      action,
+      reason,
+    });
+    return response.data;
+  },
+
+  deleteContent: async (id: string) => {
+    const response = await api.delete(`/admin/content/${id}`);
+    return response.data;
+  },
+
+  deleteQuiz: async (id: string) => {
+    const response = await api.delete(`/admin/quiz/${id}`);
+    return response.data;
+  },
+
+  getSchools: async () => {
+    const response = await api.get("/admin/schools");
+    return response.data;
+  },
+
+  createSchool: async (data: any) => {
+    const response = await api.post("/admin/schools", data);
+    return response.data;
+  },
+
+  updateSchool: async (id: string, data: any) => {
+    const response = await api.patch(`/admin/schools/${id}`, data);
+    return response.data;
+  },
+
+  getAiAnalytics: async () => {
+    const response = await api.get("/admin/ai-analytics");
+    return response.data;
+  },
+
+  getSettings: async () => {
+    const response = await api.get("/admin/settings");
+    return response.data;
+  },
+
+  updateSettings: async (data: any) => {
+    const response = await api.patch("/admin/settings", data);
+    return response.data;
+  },
 };

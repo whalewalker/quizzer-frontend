@@ -1,4 +1,4 @@
-import { apiClient, setCsrfToken } from "./api";
+import { apiClient /*, setCsrfToken */ } from "./api";
 import { AUTH_ENDPOINTS } from "../config/api";
 import type { User } from "../types";
 import { signInWithPopup } from "firebase/auth";
@@ -6,14 +6,14 @@ import { auth, googleProvider } from "../config/firebase.config";
 
 export const authService = {
   // Fetch CSRF token
-  fetchCsrfToken: async (): Promise<void> => {
-    try {
-      const response = await apiClient.get<{ csrfToken: string }>(
-        "/auth/csrf-token"
-      );
-      setCsrfToken(response.data.csrfToken);
-    } catch (error) {}
-  },
+  // fetchCsrfToken: async (): Promise<void> => {
+  //   try {
+  //     const response = await apiClient.get<{ csrfToken: string }>(
+  //       "/auth/csrf-token"
+  //     );
+  //     setCsrfToken(response.data.csrfToken);
+  //   } catch (error) {}
+  // },
 
   // Email/password login
   login: async (email: string, password: string): Promise<User> => {

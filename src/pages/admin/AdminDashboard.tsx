@@ -6,7 +6,11 @@ import {
   TrendingUp, 
   UserPlus, 
   FileText,
-  Layers
+  Layers,
+  Shield,
+  GraduationCap,
+  Settings as SettingsIcon,
+  Brain
 } from 'lucide-react';
 import { adminService } from '../../services/adminService';
 import { Link } from 'react-router-dom';
@@ -80,8 +84,8 @@ export const AdminDashboard = () => {
                   {stat.value}
                 </p>
               </div>
-              <div className={`rounded-lg p-3 ${stat.color} bg-opacity-10 text-white`}>
-                <stat.icon className={`h-6 w-6 ${stat.color.replace('bg-', 'text-')}`} />
+              <div className={`rounded-lg p-3 ${stat.color}`}>
+                <stat.icon className="h-6 w-6 text-white" />
               </div>
             </div>
             <div className="mt-4 flex items-center text-sm">
@@ -119,6 +123,54 @@ export const AdminDashboard = () => {
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">Manage Content</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Review platform content</p>
+              </div>
+            </Link>
+            <Link
+              to="/admin/moderation"
+              className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+            >
+              <div className="rounded-full bg-red-100 p-2 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                <Shield className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">Content Moderation</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Review reported content</p>
+              </div>
+            </Link>
+            <Link
+              to="/admin/schools"
+              className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+            >
+              <div className="rounded-full bg-green-100 p-2 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+                <GraduationCap className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">Schools</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Manage schools</p>
+              </div>
+            </Link>
+            <Link
+              to="/admin/ai-analytics"
+              className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+            >
+              <div className="rounded-full bg-purple-100 p-2 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                <Brain className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">AI Management</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">AI stats & prompts</p>
+              </div>
+            </Link>
+            <Link
+              to="/admin/settings"
+              className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+            >
+              <div className="rounded-full bg-gray-100 p-2 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                <SettingsIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">Settings</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Platform configuration</p>
               </div>
             </Link>
           </div>

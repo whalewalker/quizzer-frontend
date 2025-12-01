@@ -30,6 +30,10 @@ import { DiscoverPage } from './pages/DiscoverPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { UserManagement } from './pages/admin/UserManagement';
 import { ContentManagement } from './pages/admin/ContentManagement';
+import { ContentModeration } from './pages/admin/ContentModeration';
+import { SchoolManagement } from './pages/admin/SchoolManagement';
+import { AiAnalytics } from './pages/admin/AiAnalytics';
+import { PlatformSettings } from './pages/admin/PlatformSettings';
 import { AdminRoute } from './components/AdminRoute';
 
 
@@ -153,6 +157,38 @@ function AppRoutes() {
           element={
             <AdminRoute>
               <ContentManagement />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="admin/moderation"
+          element={
+            <AdminRoute>
+              <ContentModeration />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="admin/schools"
+          element={
+            <AdminRoute>
+              <SchoolManagement />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="admin/ai-analytics"
+          element={
+            <AdminRoute>
+              <AiAnalytics />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="admin/settings"
+          element={
+            <AdminRoute>
+              <PlatformSettings />
             </AdminRoute>
           }
         />

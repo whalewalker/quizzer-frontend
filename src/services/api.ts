@@ -10,29 +10,29 @@ export const apiClient = axios.create({
   },
 });
 
-let csrfToken: string | null = null;
+// let csrfToken: string | null = null;
 
-export const setCsrfToken = (token: string) => {
-  csrfToken = token;
-};
+// export const setCsrfToken = (token: string) => {
+//   csrfToken = token;
+// };
 
 // Request interceptor to add CSRF token
-apiClient.interceptors.request.use(
-  (config) => {
-    if (
-      csrfToken &&
-      ["post", "put", "delete", "patch"].includes(
-        config.method?.toLowerCase() || ""
-      )
-    ) {
-      config.headers["x-csrf-token"] = csrfToken;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// apiClient.interceptors.request.use(
+//   (config) => {
+//     if (
+//       csrfToken &&
+//       ["post", "put", "delete", "patch"].includes(
+//         config.method?.toLowerCase() || ""
+//       )
+//     ) {
+//       config.headers["x-csrf-token"] = csrfToken;
+//     }
+//     return config;
+//   },
+//   (error) => {
+//     return Promise.reject(error);
+//   }
+// );
 
 // Response interceptor to handle errors
 apiClient.interceptors.response.use(

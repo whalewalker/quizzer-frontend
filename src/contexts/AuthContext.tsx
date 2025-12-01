@@ -37,7 +37,7 @@ const authStore = {
 
 // Initialize auth state from storage and fetch CSRF token
 const initializeAuth = async () => {
-  await authService.fetchCsrfToken();
+  // await authService.fetchCsrfToken();
   const storedUser = authService.getStoredUser();
   if (storedUser) {
     authStore.setState({ user: storedUser, loading: false });
