@@ -7,6 +7,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { analytics } from './services/analytics.service';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
+import { MaintenanceOverlay } from './components/MaintenanceOverlay';
 
 // Lazy load all page components for code splitting
 const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
@@ -75,6 +76,7 @@ function App() {
       <ThemeProvider>
         <AuthProvider>
           <BrowserRouter>
+            <MaintenanceOverlay />
             <AppRoutes />
             <Toaster position="top-right" />
           </BrowserRouter>
