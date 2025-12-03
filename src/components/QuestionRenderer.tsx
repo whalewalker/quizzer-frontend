@@ -32,7 +32,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
             key={index}
             onClick={() => !showResults && onAnswerSelect(index)}
             disabled={showResults}
-            className={`w-full text-left p-5 rounded-xl border-2 transition-all duration-200 group ${
+            className={`w-full text-left p-4 sm:p-5 rounded-xl border-2 transition-all duration-200 group ${
               isCorrect
                 ? 'border-green-500 bg-green-50 dark:bg-green-900/20 dark:border-green-600'
                 : isWrong
@@ -42,9 +42,9 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                 : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-sm bg-white dark:bg-gray-800'
             }`}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-3">
               <span
-                className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${
+                className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors mt-0.5 ${
                   isCorrect
                     ? 'bg-green-500 text-white'
                     : isWrong
@@ -56,12 +56,12 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
               >
                 {option === 'True' ? 'T' : 'F'}
               </span>
-              <span className="text-base text-gray-900 dark:text-white">{option}</span>
+              <span className="text-base text-gray-900 dark:text-white pt-0.5">{option}</span>
               {showResults && isCorrect && (
-                <span className="ml-auto text-green-700 font-semibold">✓ Correct</span>
+                <span className="ml-auto text-green-700 font-semibold text-sm sm:text-base">✓ Correct</span>
               )}
               {showResults && isWrong && (
-                <span className="ml-auto text-red-700 font-semibold">✗ Your answer</span>
+                <span className="ml-auto text-red-700 font-semibold text-sm sm:text-base">✗ Your answer</span>
               )}
             </div>
           </button>
@@ -82,7 +82,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
             key={index}
             onClick={() => !showResults && onAnswerSelect(index)}
             disabled={showResults}
-            className={`w-full text-left p-5 rounded-xl border-2 transition-all duration-200 group ${
+            className={`w-full text-left p-4 sm:p-5 rounded-xl border-2 transition-all duration-200 group ${
               isCorrect
                 ? 'border-green-500 bg-green-50 dark:bg-green-900/20 dark:border-green-600'
                 : isWrong
@@ -92,9 +92,9 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                 : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-sm bg-white dark:bg-gray-800'
             }`}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-3">
               <span
-                className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${
+                className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors mt-0.5 ${
                   isCorrect
                     ? 'bg-green-500 text-white'
                     : isWrong
@@ -106,12 +106,12 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
               >
                 {String.fromCharCode(65 + index)}
               </span>
-              <span className="text-base text-gray-900 dark:text-white">{option}</span>
+              <span className="text-base text-gray-900 dark:text-white pt-0.5">{option}</span>
               {showResults && isCorrect && (
-                <span className="ml-auto text-green-700 font-semibold">✓ Correct</span>
+                <span className="ml-auto text-green-700 font-semibold text-sm sm:text-base">✓ Correct</span>
               )}
               {showResults && isWrong && (
-                <span className="ml-auto text-red-700 font-semibold">✗ Your answer</span>
+                <span className="ml-auto text-red-700 font-semibold text-sm sm:text-base">✗ Your answer</span>
               )}
             </div>
           </button>
@@ -151,7 +151,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                 key={index}
                 onClick={() => toggleOption(index)}
                 disabled={showResults}
-                className={`w-full text-left p-5 rounded-xl border-2 transition-all duration-200 group ${
+                className={`w-full text-left p-4 sm:p-5 rounded-xl border-2 transition-all duration-200 group ${
                   isCorrectlySelected
                     ? 'border-green-500 bg-green-50 dark:bg-green-900/20 dark:border-green-600'
                     : isWronglySelected
@@ -163,9 +163,9 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                     : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-sm bg-white dark:bg-gray-800'
                 }`}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-start gap-4">
                   <span
-                    className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center text-sm transition-colors ${
+                    className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center text-sm transition-colors mt-0.5 ${
                       isCorrectlySelected
                         ? 'bg-green-500 border-green-600 text-white'
                         : isWronglySelected
@@ -179,9 +179,9 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                   >
                     {(isSelected || isMissed) && '✓'}
                   </span>
-                  <span className="text-base text-gray-900 dark:text-white">{option}</span>
+                  <span className="text-base text-gray-900 dark:text-white pt-0.5">{option}</span>
                   {isMissed && (
-                    <span className="ml-auto text-orange-700 font-semibold">⚠ Missed</span>
+                    <span className="ml-auto text-orange-700 font-semibold text-sm sm:text-base">⚠ Missed</span>
                   )}
                 </div>
               </button>
@@ -271,7 +271,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                   } ${showResults ? 'cursor-default' : ''}`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${
+                    <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm mt-0.5 ${
                       isCorrect
                         ? 'bg-green-500 text-white'
                         : isWrong
@@ -358,7 +358,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
                   } ${showResults ? 'cursor-default' : ''}`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${
+                    <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm mt-0.5 ${
                       canSelect
                         ? 'bg-indigo-100 text-indigo-700'
                         : isUsed
@@ -437,7 +437,7 @@ export const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   return (
     <div>
       <div className="flex items-start gap-2 sm:gap-3 mb-4 sm:mb-6">
-        <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold shadow-md text-sm sm:text-base">
+        <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold shadow-md text-sm sm:text-base mt-0.5">
           {questionIndex + 1}
         </div>
         <div className="flex-1 min-w-0">

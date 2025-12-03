@@ -61,7 +61,7 @@ export const XPProgressBar = ({ streak, showLevelUp = false }: XPProgressBarProp
         {streak.milestones && streak.milestones.length > 0 && (
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-sm font-semibold text-gray-900 mb-4">Streak Milestones</p>
-            <div className="grid grid-cols-6 gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
               {streak.milestones.map((milestone) => (
                 <div
                   key={`milestone-${milestone.days}`}
@@ -96,7 +96,7 @@ export const XPProgressBar = ({ streak, showLevelUp = false }: XPProgressBarProp
         {streak.achievements && streak.achievements.length > 0 && (
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-sm font-semibold text-gray-900 mb-4">Recent Achievements</p>
-            <div className="grid grid-cols-5 gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
               {streak.achievements.slice(0, 5).map((achievement) => (
                 <div
                   key={`achievement-${achievement.name}`}

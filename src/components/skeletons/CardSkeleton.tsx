@@ -9,7 +9,7 @@ export const CardSkeleton: React.FC<CardSkeletonProps> = ({ count = 1 }) => {
   return (
     <>
       {Array.from({ length: count }).map((_, index) => (
-        <div key={index} className="card dark:bg-gray-800 p-6">
+        <div key={index} className="card dark:bg-gray-800 p-4 md:p-6">
           <div className="flex items-start justify-between mb-4">
             <Skeleton circle width={48} height={48} />
             <Skeleton width={60} height={24} borderRadius={12} />

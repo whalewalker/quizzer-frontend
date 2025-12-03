@@ -129,10 +129,10 @@ export const DashboardPage = () => {
   return (
     <div className="space-y-6 pb-8">
       {/* Hero Header */}
-      <header className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-600 dark:from-blue-800 dark:via-indigo-800 dark:to-cyan-800 p-6 md:p-8 shadow-lg">
+      <header className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-600 dark:from-blue-800 dark:via-indigo-800 dark:to-cyan-800 p-4 md:p-8 shadow-lg">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white rounded-full"></div>
-          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white rounded-full"></div>
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white rounded-full hidden md:block"></div>
+          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white rounded-full hidden md:block"></div>
         </div>
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
@@ -141,7 +141,7 @@ export const DashboardPage = () => {
               <Sparkles className="w-6 h-6 text-yellow-300" />
               <span className="text-yellow-300 font-semibold text-sm">Your Learning Hub</span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+            <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">
               Welcome back, {user?.name || 'Learner'}! 👋
             </h1>
             <p className="text-blue-100 dark:text-blue-200 text-lg">
@@ -149,17 +149,17 @@ export const DashboardPage = () => {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
             <button
               onClick={() => navigate('/study')}
-              className="flex items-center gap-2 px-6 py-3 bg-white text-blue-600 hover:bg-blue-50 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-blue-600 hover:bg-blue-50 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 w-full sm:w-auto"
             >
               <BookOpen className="w-5 h-5" />
               Start Studying
             </button>
             <button
               onClick={() => navigate('/quiz')}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600/20 text-white hover:bg-blue-600/30 border border-white/20 backdrop-blur-sm rounded-xl font-semibold transition-colors"
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600/20 text-white hover:bg-blue-600/30 border border-white/20 backdrop-blur-sm rounded-xl font-semibold transition-colors w-full sm:w-auto"
             >
               <Brain className="w-5 h-5" />
               Create Quiz
@@ -179,7 +179,7 @@ export const DashboardPage = () => {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="card bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-800 border-blue-200 dark:border-gray-700">
+        <div className="card p-4 md:p-6 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-800 border-blue-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Total Attempts</p>
@@ -194,7 +194,7 @@ export const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="card bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-800 border-green-200 dark:border-gray-700">
+        <div className="card p-4 md:p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-800 border-green-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Avg. Accuracy</p>
@@ -209,7 +209,7 @@ export const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="card bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-800 border-orange-200 dark:border-gray-700">
+        <div className="card p-4 md:p-6 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-800 border-orange-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Current Streak</p>
@@ -224,7 +224,7 @@ export const DashboardPage = () => {
       </div>
 
       {/* Activity Chart */}
-      <div className="card dark:bg-gray-800">
+      <div className="card p-4 md:p-6 dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary-600 dark:text-primary-400" />
@@ -281,7 +281,7 @@ export const DashboardPage = () => {
 
       {/* Coaching Tips */}
       {coachingTips && coachingTips.length > 0 && (
-        <div className="card bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0 shadow-lg">
+        <div className="card p-4 md:p-6 bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0 shadow-lg">
           <div className="flex items-start gap-4">
             <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
               <Sparkles className="w-6 h-6 text-yellow-300" />
@@ -321,7 +321,7 @@ export const DashboardPage = () => {
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Learning Progress */}
-        <div className="card dark:bg-gray-800">
+        <div className="card p-4 md:p-6 dark:bg-gray-800">
           <div className="flex items-center gap-2 mb-4">
             <Brain className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Learning Progress</h3>
@@ -381,7 +381,7 @@ export const DashboardPage = () => {
             <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
             <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-black/10 rounded-full blur-2xl" />
 
-            <div className="relative z-10 p-6 text-white">
+            <div className="relative z-10 p-4 md:p-6 text-white">
               <div className="flex items-center gap-2 mb-3">
                 <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
                   <Sparkles className="w-5 h-5 text-yellow-300" />
@@ -391,14 +391,14 @@ export const DashboardPage = () => {
                 </h3>
               </div>
 
-              <h4 className="text-2xl font-bold mb-2 text-white">
+              <h4 className="text-xl md:text-2xl font-bold mb-2 text-white">
                 {topRecommendation.topic}
               </h4>
               <p className="text-blue-100 mb-6 text-sm leading-relaxed opacity-90">
                 {topRecommendation.reason}
               </p>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 {topRecommendation.quizId && (
                   <button
                     onClick={() => navigate(`/quiz/${topRecommendation.quizId}`)}
@@ -436,7 +436,7 @@ export const DashboardPage = () => {
             </div>
           </div>
         ) : (
-          <div className="card dark:bg-gray-800">
+          <div className="card p-4 md:p-6 dark:bg-gray-800">
             <div className="flex items-center gap-2 mb-3">
               <Zap className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Get Started</h3>
@@ -457,7 +457,7 @@ export const DashboardPage = () => {
 
       {/* Recent Attempts */}
       {!attemptsLoading && recentAttemptsData && recentAttemptsData.attempts.length > 0 && (
-        <div className="card dark:bg-gray-800">
+        <div className="card p-4 md:p-6 dark:bg-gray-800">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Attempts</h3>
             <button
@@ -480,18 +480,19 @@ export const DashboardPage = () => {
                     navigate(`/attempts?flashcardId=${attempt.flashcardSet.id}`);
                   }
                 }}
-                className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer group"
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer group gap-4"
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                     {attempt.quiz?.title || attempt.flashcardSet?.title || 'Untitled'}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    {attempt.type === 'quiz' ? 'Quiz' : 'Flashcards'} • {new Date(attempt.completedAt).toLocaleDateString()}
+                    <span className="hidden sm:inline">{attempt.type === 'quiz' ? 'Quiz' : 'Flashcards'} • </span>
+                    {new Date(attempt.completedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </p>
                 </div>
                 {attempt.score !== undefined && attempt.totalQuestions && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <span className={`text-sm font-semibold ${
                       (attempt.score / attempt.totalQuestions) >= 0.7 
                         ? 'text-green-600 dark:text-green-400' 
@@ -514,7 +515,7 @@ export const DashboardPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link
           to="/study"
-          className="card dark:bg-gray-800 hover:border-primary-500 dark:hover:border-primary-500 transition-all group"
+          className="card p-4 md:p-6 dark:bg-gray-800 hover:border-primary-500 dark:hover:border-primary-500 transition-all group"
         >
           <div className="flex items-center gap-3">
             <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
@@ -532,7 +533,7 @@ export const DashboardPage = () => {
 
         <Link
           to="/statistics"
-          className="card dark:bg-gray-800 hover:border-primary-500 dark:hover:border-primary-500 transition-all group"
+          className="card p-4 md:p-6 dark:bg-gray-800 hover:border-primary-500 dark:hover:border-primary-500 transition-all group"
         >
           <div className="flex items-center gap-3">
             <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
@@ -550,7 +551,7 @@ export const DashboardPage = () => {
 
         <Link
           to="/attempts"
-          className="card dark:bg-gray-800 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all group"
+          className="card p-4 md:p-6 dark:bg-gray-800 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all group"
         >
           <div className="flex items-center gap-3">
             <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">

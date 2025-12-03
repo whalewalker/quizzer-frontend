@@ -221,7 +221,7 @@ export const FlashcardStudyPage = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-8">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-xl bg-emerald-600 dark:bg-emerald-900 p-6 shadow-lg">
+      <div className="relative overflow-hidden rounded-xl bg-emerald-600 dark:bg-emerald-900 p-4 md:p-6 shadow-lg">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white rounded-full"></div>
           <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white rounded-full"></div>
@@ -295,14 +295,14 @@ export const FlashcardStudyPage = () => {
           </div>
 
           {/* Front of card */}
-          <div
-            className="flex flex-col items-center justify-center min-h-[450px] text-center px-8 py-12 bg-emerald-50 dark:bg-gray-700 rounded-xl"
-            style={{
-              backfaceVisibility: 'hidden',
-              WebkitBackfaceVisibility: 'hidden',
-              position: isFlipped ? 'absolute' : 'relative',
-              width: '100%',
-            }}
+            <div
+              className="flex flex-col items-center justify-center min-h-[450px] text-center px-4 py-8 md:px-8 md:py-12 bg-emerald-50 dark:bg-gray-700 rounded-xl"
+              style={{
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+                position: isFlipped ? 'absolute' : 'relative',
+                width: '100%',
+              }}
           >
             <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-500 rounded-full mb-6 shadow-lg">
               <BookOpen className="w-8 h-8 text-white" />
@@ -315,7 +315,7 @@ export const FlashcardStudyPage = () => {
 
           {/* Back of card */}
           <div
-            className="flex flex-col items-center justify-center min-h-[450px] text-center px-8 py-12 bg-emerald-50 dark:bg-gray-700 rounded-xl"
+            className="flex flex-col items-center justify-center min-h-[450px] text-center px-4 py-8 md:px-8 md:py-12 bg-emerald-50 dark:bg-gray-700 rounded-xl"
             style={{
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
@@ -356,17 +356,17 @@ export const FlashcardStudyPage = () => {
             <button
               onClick={() => handleResponse('dont-know')}
               disabled={submitting}
-              className="group relative flex items-center justify-center gap-3 px-8 py-4 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 border-2 border-red-300 dark:border-red-700 hover:border-red-400 dark:hover:border-red-600 rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md"
+              className="group relative flex items-center justify-center gap-3 px-6 py-3 md:px-8 md:py-4 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 border-2 border-red-300 dark:border-red-700 hover:border-red-400 dark:hover:border-red-600 rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md"
             >
-              <span className="text-3xl group-hover:scale-110 group-active:scale-95 transition-transform duration-200">👎🏼</span>
+              <span className="text-2xl md:text-3xl group-hover:scale-110 group-active:scale-95 transition-transform duration-200">👎🏼</span>
             </button>
             
             <button
               onClick={() => handleResponse('know')}
               disabled={submitting}
-              className="group relative flex items-center justify-center gap-3 px-8 py-4 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 border-2 border-green-300 dark:border-green-700 hover:border-green-400 dark:hover:border-green-600 rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md"
+              className="group relative flex items-center justify-center gap-3 px-6 py-3 md:px-8 md:py-4 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 border-2 border-green-300 dark:border-green-700 hover:border-green-400 dark:hover:border-green-600 rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-md"
             >
-              <span className="text-3xl group-hover:scale-110 group-active:scale-95 transition-transform duration-200">👍🏼</span>
+              <span className="text-2xl md:text-3xl group-hover:scale-110 group-active:scale-95 transition-transform duration-200">👍🏼</span>
             </button>
           </div>
 
@@ -374,26 +374,28 @@ export const FlashcardStudyPage = () => {
             <button
               onClick={handlePrevious}
               disabled={currentCardIndex === 0}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-3 md:px-5 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-5 h-5" />
-              Previous
+              <span className="hidden sm:inline">Previous</span>
             </button>
 
             <button
               onClick={handleFlip}
-              className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-all shadow-md hover:shadow-lg"
+              className="flex items-center gap-2 px-4 md:px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-all shadow-md hover:shadow-lg"
             >
               <RotateCw className="w-5 h-5" />
-              Flip Card
+              <span className="hidden sm:inline">Flip Card</span>
+              <span className="sm:hidden">Flip</span>
             </button>
 
             <button
               onClick={handleNext}
               disabled={currentCardIndex === flashcardSet.cards.length - 1 && !cardResponses.some(r => r.cardIndex === currentCardIndex)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-3 md:px-5 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {currentCardIndex === flashcardSet.cards.length - 1 ? 'Finish' : 'Next'}
+              <span className="hidden sm:inline">{currentCardIndex === flashcardSet.cards.length - 1 ? 'Finish' : 'Next'}</span>
+              <span className="sm:hidden">{currentCardIndex === flashcardSet.cards.length - 1 ? 'Done' : 'Next'}</span>
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>

@@ -270,10 +270,10 @@ export const StudyPage = () => {
 
 
       {/* Hero Header */}
-      <header className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary-600 via-primary-700 to-blue-700 dark:from-primary-800 dark:via-primary-900 dark:to-blue-900 p-8 md:p-10 shadow-xl">
+      <header className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary-600 via-primary-700 to-blue-700 dark:from-primary-800 dark:via-primary-900 dark:to-blue-900 p-6 md:p-10 shadow-xl">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute -top-20 -right-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute -top-20 -right-20 w-40 h-40 md:w-64 md:h-64 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-20 -left-20 w-40 h-40 md:w-64 md:h-64 bg-white rounded-full blur-3xl"></div>
         </div>
         <div className="relative z-10">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
@@ -284,17 +284,17 @@ export const StudyPage = () => {
                 </div>
                 <span className="text-yellow-300 font-semibold text-lg">Study Hub</span>
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
+              <h1 className="text-3xl md:text-5xl font-bold text-white mb-3">
                 Study Materials
               </h1>
-              <p className="text-primary-100 dark:text-primary-200 text-lg md:text-xl max-w-2xl">
+              <p className="text-primary-100 dark:text-primary-200 text-base md:text-xl max-w-2xl">
                 Access your generated study content or create new materials powered by AI
               </p>
             </div>
             {!showCreator && (
               <button
                 onClick={() => setShowCreator(true)}
-                className="group flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-gray-700 rounded-xl transition-all hover:scale-105 font-semibold shadow-lg whitespace-nowrap"
+                className="group flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-gray-700 rounded-xl transition-all hover:scale-105 font-semibold shadow-lg whitespace-nowrap w-full md:w-auto"
               >
                 <Plus className="w-5 h-5" />
                 Create Study Material
@@ -372,7 +372,7 @@ export const StudyPage = () => {
           <div className="min-h-[400px]">
             {activeTab === 'topic' && (
               <div className="space-y-6">
-                <div className="bg-gradient-to-br from-blue-50 to-primary-50 dark:from-gray-800 dark:to-gray-800 p-6 rounded-xl border border-primary-200 dark:border-gray-700">
+                <div className="bg-gradient-to-br from-blue-50 to-primary-50 dark:from-gray-800 dark:to-gray-800 p-4 md:p-6 rounded-xl border border-primary-200 dark:border-gray-700">
                   <div className="flex items-start gap-3 mb-4">
                     <Zap className="w-6 h-6 text-primary-600 mt-1" />
                     <div>
@@ -439,7 +439,7 @@ export const StudyPage = () => {
 
             {activeTab === 'text' && (
               <div className="space-y-6">
-                <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-800 p-6 rounded-xl border border-purple-200 dark:border-gray-700">
+                <div className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-800 p-4 md:p-6 rounded-xl border border-purple-200 dark:border-gray-700">
                   <div className="flex items-start gap-3 mb-4">
                     <FileText className="w-6 h-6 text-purple-600 mt-1" />
                     <div>
@@ -506,7 +506,7 @@ export const StudyPage = () => {
 
             {activeTab === 'file' && (
               <div className="space-y-6">
-                <div className="bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-800 p-6 rounded-xl border border-green-200 dark:border-gray-700">
+                <div className="bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-800 p-4 md:p-6 rounded-xl border border-green-200 dark:border-gray-700">
                   <div className="flex items-start gap-3 mb-4">
                     <Upload className="w-6 h-6 text-green-600 mt-1" />
                     <div>
@@ -519,7 +519,7 @@ export const StudyPage = () => {
                 </div>
 
                 <div
-                  className={`border-3 border-dashed rounded-xl p-12 text-center transition-all ${
+                  className={`border-3 border-dashed rounded-xl p-6 md:p-12 text-center transition-all ${
                     file 
                       ? 'border-primary-500 bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20' 
                       : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 dark:hover:border-primary-500 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -586,7 +586,7 @@ export const StudyPage = () => {
               {contents.map((content) => (
                 <div 
                   key={content.id}
-                  className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-xl transition-all border border-gray-100 dark:border-gray-700 group relative"
+                  className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-xl shadow-md hover:shadow-xl transition-all border border-gray-100 dark:border-gray-700 group relative"
                 >
                   <div 
                     className="cursor-pointer"

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { BookOpen, Highlighter, Brain, ArrowLeft, Loader2, StickyNote, Trash2, Calendar, Check, Edit3, Save } from 'lucide-react';
+import { BookOpen, Highlighter, Brain, ArrowLeft, Loader2, StickyNote, Trash2, Calendar, Check, Edit3, Save, X, MoreVertical } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -439,6 +439,70 @@ export const ContentPage = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isEditing]); // Only isEditing needed - handlers use latest values via closure
 
+  const renderNotesContent = () => (
+    <>
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2 text-lg">
+          <StickyNote className="w-5 h-5 text-primary-600" />
+          Notes & Highlights
+        </h3>
+        <span className="text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
+          {content?.highlights?.length || 0}
+        </span>
+      </div>
+
+      <div className="space-y-4 flex-1">
+        {content?.highlights && content.highlights.length > 0 ? (
+          content.highlights.map((highlight) => (
+            <div 
+              key={highlight.id} 
+              className={`p-4 rounded-xl border transition-all hover:shadow-md group relative ${
+                HIGHLIGHT_BORDER_COLORS[highlight.color as keyof typeof HIGHLIGHT_BORDER_COLORS]
+              } bg-white dark:bg-gray-800`}
+            >
+              <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${
+                highlight.color === 'yellow' ? 'bg-yellow-400' : 
+                highlight.color === 'green' ? 'bg-green-400' : 'bg-pink-400'
+              }`}></div>
+              
+              <div className="flex justify-between items-start mb-2 pl-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  {highlight.note ? 'Note' : 'Highlight'}
+                </span>
+                <button 
+                  onClick={() => handleDeleteHighlight(highlight.id)}
+                  className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              
+              <p className="text-sm text-gray-800 dark:text-gray-200 italic mb-2 pl-2">
+                "{highlight.text}"
+              </p>
+              
+              {highlight.note && (
+                <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 pl-2">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">{highlight.note}</p>
+                </div>
+              )}
+              
+              <div className="mt-2 text-xs text-gray-400 pl-2">
+                {format(new Date(highlight.createdAt), 'MMM d, h:mm a')}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-12 text-gray-400 dark:text-gray-500">
+            <Highlighter className="w-12 h-12 mx-auto mb-3 opacity-20" />
+            <p className="text-sm">No highlights yet</p>
+            <p className="text-xs mt-1 opacity-70">Select text to add highlights</p>
+          </div>
+        )}
+      </div>
+    </>
+  );
+
   // Helper function to apply highlights to markdown content
   const applyHighlights = (markdown: string, highlights: Highlight[]) => {
     if (!highlights || highlights.length === 0) return markdown;
@@ -525,7 +589,7 @@ export const ContentPage = () => {
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <div className="flex items-center gap-2 mb-1">
+              <div className="hidden sm:flex items-center gap-2 mb-1">
                 <span className="text-xs font-semibold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/30 px-2 py-0.5 rounded text-nowrap">
                   {content.topic}
                 </span>
@@ -534,7 +598,7 @@ export const ContentPage = () => {
                   {format(new Date(content.createdAt), 'MMM d')}
                 </span>
               </div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate max-w-md">{content.title}</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate max-w-[200px] sm:max-w-md">{content.title}</h1>
             </div>
           </div>
 
@@ -544,60 +608,94 @@ export const ContentPage = () => {
                   {content.quizId ? (
                     <button 
                       onClick={() => navigate(`/quiz/${content.quizId}`)}
-                      className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm text-sm font-medium"
+                      className="flex items-center gap-2 px-2 sm:px-4 py-2 bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm text-sm font-medium"
+                      title="View Quiz"
                     >
-                      <Brain className="w-4 h-4" />
-                      View Quiz
+                      <Brain className="w-4 h-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">View Quiz</span>
                     </button>
                   ) : (
                     <button 
                       onClick={handleGenerateQuiz}
-                      className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-sm text-sm font-medium"
+                      className="flex items-center gap-2 px-2 sm:px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-sm text-sm font-medium"
+                      title="Generate Quiz"
                     >
-                      <Brain className="w-4 h-4" />
-                      Generate Quiz
+                      <Brain className="w-4 h-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">Generate Quiz</span>
                     </button>
                   )}
 
                   {content.flashcardSetId ? (
                     <button 
                       onClick={() => navigate(`/flashcards/${content.flashcardSetId}`)}
-                      className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm text-sm font-medium"
+                      className="flex items-center gap-2 px-2 sm:px-4 py-2 bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm text-sm font-medium"
+                      title="View Flashcards"
                     >
-                      <BookOpen className="w-4 h-4" />
-                      View Flashcards
+                      <BookOpen className="w-4 h-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">View Flashcards</span>
                     </button>
                   ) : (
                     <button 
                       onClick={handleGenerateFlashcards}
-                      className="hidden sm:flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm text-sm font-medium"
+                      className="flex items-center gap-2 px-2 sm:px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm text-sm font-medium"
+                      title="Generate Flashcards"
                     >
-                      <BookOpen className="w-4 h-4" />
-                      Generate Flashcards
+                      <BookOpen className="w-4 h-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">Generate Flashcards</span>
                     </button>
                   )}
-                  <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1 hidden sm:block"></div>
-                  <button 
-                    onClick={handleEdit}
-                    className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    title="Edit Content"
-                  >
-                    <Edit3 className="w-5 h-5" />
-                  </button>
-                  <button 
-                    onClick={() => setShowNotes(!showNotes)}
-                    className={`p-2 rounded-lg transition-colors ${showNotes ? 'text-primary-600 bg-primary-50 dark:text-primary-400 dark:bg-primary-900/20' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-                    title="Toggle Notes"
-                  >
-                    <StickyNote className="w-5 h-5" />
-                  </button>
-                  <button 
-                    onClick={handleDelete}
-                    className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                    title="Delete Content"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
+                  {/* Desktop Actions */}
+                  <div className="hidden sm:flex items-center gap-2">
+                    <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                    <button 
+                      onClick={handleEdit}
+                      className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      title="Edit Content"
+                    >
+                      <Edit3 className="w-5 h-5" />
+                    </button>
+                    <button 
+                      onClick={() => setShowNotes(!showNotes)}
+                      className={`p-2 rounded-lg transition-colors ${showNotes ? 'text-primary-600 bg-primary-50 dark:text-primary-400 dark:bg-primary-900/20' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                      title="Toggle Notes"
+                    >
+                      <StickyNote className="w-5 h-5" />
+                    </button>
+                    <button 
+                      onClick={handleDelete}
+                      className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                      title="Delete Content"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Mobile Actions Dropdown */}
+                  <div className="sm:hidden relative group">
+                    <button className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 hidden group-hover:block group-focus-within:block z-50">
+                      <button 
+                        onClick={handleEdit}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+                      >
+                        <Edit3 className="w-4 h-4" /> Edit
+                      </button>
+                      <button 
+                        onClick={() => setShowNotes(!showNotes)}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+                      >
+                        <StickyNote className="w-4 h-4" /> {showNotes ? 'Hide Notes' : 'Show Notes'}
+                      </button>
+                      <button 
+                        onClick={handleDelete}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" /> Delete
+                      </button>
+                    </div>
+                  </div>
                 </>
               ) : (
                 <>
@@ -625,7 +723,7 @@ export const ContentPage = () => {
       <div className="flex gap-8 max-w-[1600px] mx-auto">
         {/* Main Content */}
         <div className="flex-1 min-w-0">
-          <div ref={contentRef} onClick={handleContentClick} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 md:p-12 min-h-[500px]">
+          <div ref={contentRef} onClick={handleContentClick} className="bg-white dark:bg-gray-800 sm:rounded-2xl sm:shadow-sm sm:border border-gray-200 dark:border-gray-700 p-0 sm:p-8 md:p-12 min-h-[500px]">
             {isEditing ? (
               <div className="space-y-4">
                 <div>
@@ -725,71 +823,29 @@ export const ContentPage = () => {
           </div>
         </div>
 
-        {/* Notes Sidebar */}
+        {/* Notes Sidebar / Drawer */}
         {showNotes && !isEditing && (
-          <div className="w-80 flex-shrink-0 hidden xl:block">
-            <div className="sticky top-24 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 max-h-[calc(100vh-120px)] overflow-y-auto flex flex-col">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2 text-lg">
-                  <StickyNote className="w-5 h-5 text-primary-600" />
-                  Notes & Highlights
-                </h3>
-                <span className="text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
-                  {content.highlights?.length || 0}
-                </span>
-              </div>
-
-              <div className="space-y-4 flex-1">
-                {content.highlights && content.highlights.length > 0 ? (
-                  content.highlights.map((highlight) => (
-                    <div 
-                      key={highlight.id} 
-                      className={`p-4 rounded-xl border transition-all hover:shadow-md group relative ${
-                        HIGHLIGHT_BORDER_COLORS[highlight.color as keyof typeof HIGHLIGHT_BORDER_COLORS]
-                      } bg-white dark:bg-gray-800`}
-                    >
-                      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${
-                        highlight.color === 'yellow' ? 'bg-yellow-400' : 
-                        highlight.color === 'green' ? 'bg-green-400' : 'bg-pink-400'
-                      }`}></div>
-                      
-                      <div className="flex justify-between items-start mb-2 pl-2">
-                        <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                          {highlight.note ? 'Note' : 'Highlight'}
-                        </span>
-                        <button 
-                          onClick={() => handleDeleteHighlight(highlight.id)}
-                          className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                      
-                      <p className="text-sm text-gray-800 dark:text-gray-200 italic mb-2 pl-2">
-                        "{highlight.text}"
-                      </p>
-                      
-                      {highlight.note && (
-                        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 pl-2">
-                          <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">{highlight.note}</p>
-                        </div>
-                      )}
-                      
-                      <div className="mt-2 text-xs text-gray-400 pl-2">
-                        {format(new Date(highlight.createdAt), 'MMM d, h:mm a')}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-12 text-gray-400 dark:text-gray-500">
-                    <Highlighter className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                    <p className="text-sm">No highlights yet</p>
-                    <p className="text-xs mt-1 opacity-70">Select text to add highlights</p>
-                  </div>
-                )}
+          <>
+            {/* Desktop Sidebar */}
+            <div className="w-80 flex-shrink-0 hidden xl:block">
+              <div className="sticky top-24 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 max-h-[calc(100vh-120px)] overflow-y-auto flex flex-col">
+                {renderNotesContent()}
               </div>
             </div>
-          </div>
+
+            {/* Mobile/Tablet Drawer */}
+            <div className="fixed inset-0 z-[60] xl:hidden">
+              <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowNotes(false)}></div>
+              <div className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white dark:bg-gray-800 shadow-xl p-6 overflow-y-auto flex flex-col animate-in slide-in-from-right duration-200">
+                <div className="flex justify-end mb-2">
+                  <button onClick={() => setShowNotes(false)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                {renderNotesContent()}
+              </div>
+            </div>
+          </>
         )}
       </div>
 

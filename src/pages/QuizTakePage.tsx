@@ -416,7 +416,7 @@ export const QuizTakePage = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 pb-6 sm:pb-8">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-lg sm:rounded-xl bg-primary-600 dark:bg-primary-900 p-4 sm:p-6 shadow-lg">
+      <div className="relative overflow-hidden rounded-lg sm:rounded-xl bg-gradient-to-br from-primary-600 to-primary-800 dark:from-primary-900 dark:to-primary-950 p-4 sm:p-6 shadow-lg">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white rounded-full"></div>
           <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white rounded-full"></div>
@@ -425,10 +425,10 @@ export const QuizTakePage = () => {
         <div className="relative z-10">
           <button
             onClick={() => navigate('/quiz')}
-            className="flex items-center gap-2 text-white hover:text-primary-100 dark:hover:text-primary-200 mb-3 sm:mb-4 transition-colors touch-manipulation"
+            className="flex items-center gap-2 text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm mb-3 sm:mb-4 transition-all touch-manipulation w-fit"
           >
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="text-sm sm:text-base">Back to Quizzes</span>
+            <span className="text-sm sm:text-base font-medium">Back to Quizzes</span>
           </button>
 
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">

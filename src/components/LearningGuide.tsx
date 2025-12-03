@@ -36,44 +36,48 @@ export const LearningGuide: React.FC<LearningGuideProps> = ({
 }) => {
   const [completedSections, setCompletedSections] = useState<Set<number>>(() => {
     const initial = new Set<number>();
-    guide.sections.forEach((section, index) => {
+    for (const section of guide.sections) {
+        const index = guide.sections.indexOf(section);
       if (section.completed) initial.add(index);
-    });
-    return initial;
+    }
+      return initial;
   });
 
   // Sync with guide updates
   React.useEffect(() => {
     const newCompleted = new Set<number>();
-    guide.sections.forEach((section, index) => {
+    for (const section of guide.sections) {
+        const index = guide.sections.indexOf(section);
       if (section.completed) newCompleted.add(index);
-    });
-    setCompletedSections(newCompleted);
+    }
+      setCompletedSections(newCompleted);
   }, [guide]);
   const [activeSection, setActiveSection] = useState<number>(0);
   const [generatedContent, setGeneratedContent] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
-    guide.sections.forEach((section, index) => {
+    for (const section of guide.sections) {
+        const index = guide.sections.indexOf(section);
       if (section.generatedExplanation) {
         initial[`${index}-explain`] = section.generatedExplanation;
       }
       if (section.generatedExample) {
         initial[`${index}-example`] = section.generatedExample;
       }
-    });
-    return initial;
+    }
+      return initial;
   });
   const [visibleContent, setVisibleContent] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
-    guide.sections.forEach((section, index) => {
+    for (const section of guide.sections) {
+        const index = guide.sections.indexOf(section);
       if (section.generatedExplanation) {
         initial[`${index}-explain`] = true;
       }
       if (section.generatedExample) {
         initial[`${index}-example`] = true;
       }
-    });
-    return initial;
+    }
+      return initial;
   });
   const [loadingAction, setLoadingAction] = useState<{section: number, type: 'explain' | 'example'} | null>(null);
 
@@ -138,7 +142,7 @@ export const LearningGuide: React.FC<LearningGuideProps> = ({
       }));
 
       // Persist to backend
-      const updatedGuide = JSON.parse(JSON.stringify(guide));
+      const updatedGuide = structuredClone(guide);
       if (updatedGuide.sections[sectionIndex]) {
         if (type === 'explain') {
           updatedGuide.sections[sectionIndex].generatedExplanation = result;
@@ -182,10 +186,10 @@ export const LearningGuide: React.FC<LearningGuideProps> = ({
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500" ref={contentRef} onClick={onContentClick}>
       {/* Header Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-800 sm:rounded-2xl p-4 md:p-6 sm:shadow-sm sm:border border-gray-200 dark:border-gray-700">
         <div className="flex items-start justify-between gap-6 mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: 'Lexend' }}>{title}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: 'Lexend' }}>{title}</h1>
             <div className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed prose dark:prose-invert max-w-none" style={{ fontFamily: 'Lexend' }}>
               <ReactMarkdown 
                 remarkPlugins={[remarkGfm, remarkMath]}
@@ -250,20 +254,20 @@ export const LearningGuide: React.FC<LearningGuideProps> = ({
             <div
               key={idx}
               data-section-index={idx}
-              className={`bg-white dark:bg-gray-800 rounded-xl border transition-all duration-300 overflow-hidden ${
+              className={`bg-white dark:bg-gray-800 sm:rounded-xl sm:border transition-all duration-300 overflow-hidden ${
                 activeSection === idx
-                  ? 'border-primary-500 shadow-md ring-1 ring-primary-500/20'
+                  ? 'sm:border-primary-500 sm:shadow-md sm:ring-1 ring-primary-500/20'
                   : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
               <div
                 onClick={() => toggleSection(idx)}
-                className="p-6 flex items-center justify-between cursor-pointer select-none"
+                className="p-4 md:p-6 flex items-center justify-between cursor-pointer select-none"
               >
                 <div className="flex items-center gap-4">
                   <button
                     onClick={(e) => markAsComplete(idx, e)}
-                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0 ${
                       isCompleted
                         ? 'bg-green-500 border-green-500 text-white'
                         : 'border-gray-300 dark:border-gray-600 text-transparent hover:border-green-500'
@@ -323,7 +327,7 @@ export const LearningGuide: React.FC<LearningGuideProps> = ({
                 }`}
               >
                 <div className="overflow-hidden">
-                  <div className="px-6 pb-6 pt-0 border-t border-gray-100 dark:border-gray-700/50 mt-2">
+                  <div className="px-4 md:px-6 pb-4 md:pb-6 pt-0 border-t border-gray-100 dark:border-gray-700/50 mt-2">
                     <div className="prose prose-lg dark:prose-invert max-w-none mt-4 text-gray-600 dark:text-gray-300 content-markdown">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm, remarkMath]}
@@ -353,11 +357,11 @@ export const LearningGuide: React.FC<LearningGuideProps> = ({
                     </div>
 
                     {section.example && (
-                      <div className="mt-4 relative overflow-hidden rounded-xl border border-blue-100 dark:border-blue-900/50 bg-gradient-to-br from-blue-50/50 to-white dark:from-blue-900/10 dark:to-gray-800 shadow-sm">
-                        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-400 to-blue-600"></div>
+                      <div className="mt-4 relative overflow-hidden sm:rounded-xl sm:border border-blue-100 dark:border-blue-900/50 bg-blue-50/30 sm:bg-gradient-to-br sm:from-blue-50/50 sm:to-white dark:from-blue-900/10 dark:to-gray-800 sm:shadow-sm border-l-4 sm:border-l border-l-blue-500 sm:border-l-blue-100">
+                        <div className="hidden sm:block absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-400 to-blue-600"></div>
                         <div className="p-4">
                           <div className="flex items-center gap-2.5 mb-2">
-                            <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-800 shadow-sm border border-blue-100 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                            <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-800 shadow-sm border border-blue-100 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 flex-shrink-0">
                               <Lightbulb className="w-4 h-4" />
                             </div>
                             <div>
@@ -386,40 +390,40 @@ export const LearningGuide: React.FC<LearningGuideProps> = ({
                           <button
                             onClick={() => handleAskQuestion(idx, 'explain')}
                             disabled={!!loadingAction}
-                            className="group relative flex items-center gap-2.5 px-5 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-300 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700 hover:border-purple-200 dark:hover:border-purple-800 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+                            className="group relative flex items-center gap-2.5 px-4 py-3 md:px-5 md:py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-300 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700 hover:border-purple-200 dark:hover:border-purple-800 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden flex-1 sm:flex-none justify-center h-auto min-h-[44px]"
                           >
                             <div className="absolute inset-0 bg-purple-50 dark:bg-purple-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                             {loadingAction?.section === idx && loadingAction?.type === 'explain' ? (
-                              <Loader2 className="w-4 h-4 animate-spin relative z-10" />
+                              <Loader2 className="w-4 h-4 animate-spin relative z-10 flex-shrink-0" />
                             ) : (
-                              <MessageCircle className="w-4 h-4 relative z-10" />
+                              <MessageCircle className="w-4 h-4 relative z-10 flex-shrink-0" />
                             )}
-                            <span className="relative z-10 font-medium text-sm" style={{ fontFamily: 'Lexend' }}>Explain this better</span>
+                            <span className="relative z-10 font-medium text-sm text-center leading-tight" style={{ fontFamily: 'Lexend' }}>Explain this better</span>
                           </button>
                           
                           <button
                             onClick={() => handleAskQuestion(idx, 'example')}
                             disabled={!!loadingAction}
-                            className="group relative flex items-center gap-2.5 px-5 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl hover:text-amber-600 dark:hover:text-amber-400 transition-all duration-300 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700 hover:border-amber-200 dark:hover:border-amber-800 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+                            className="group relative flex items-center gap-2.5 px-4 py-3 md:px-5 md:py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-xl hover:text-amber-600 dark:hover:text-amber-400 transition-all duration-300 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700 hover:border-amber-200 dark:hover:border-amber-800 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden flex-1 sm:flex-none justify-center h-auto min-h-[44px]"
                           >
                             <div className="absolute inset-0 bg-amber-50 dark:bg-amber-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                             {loadingAction?.section === idx && loadingAction?.type === 'example' ? (
-                              <Loader2 className="w-4 h-4 animate-spin relative z-10" />
+                              <Loader2 className="w-4 h-4 animate-spin relative z-10 flex-shrink-0" />
                             ) : (
-                              <Sparkles className="w-4 h-4 relative z-10" />
+                              <Sparkles className="w-4 h-4 relative z-10 flex-shrink-0" />
                             )}
-                            <span className="relative z-10 font-medium text-sm" style={{ fontFamily: 'Lexend' }}>Give more examples</span>
+                            <span className="relative z-10 font-medium text-sm text-center leading-tight" style={{ fontFamily: 'Lexend' }}>Give more examples</span>
                           </button>
                         </div>
 
                         {/* Generated Content Display */}
                         {generatedContent[`${idx}-explain`] && visibleContent[`${idx}-explain`] && (
-                          <div className="relative overflow-hidden rounded-2xl border border-purple-100 dark:border-purple-900/50 bg-gradient-to-br from-purple-50/50 to-white dark:from-purple-900/10 dark:to-gray-800 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
-                            <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-purple-400 to-purple-600"></div>
-                            <div className="p-6">
+                          <div className="relative overflow-hidden sm:rounded-2xl sm:border border-purple-100 dark:border-purple-900/50 bg-purple-50/30 sm:bg-gradient-to-br sm:from-purple-50/50 sm:to-white dark:from-purple-900/10 dark:to-gray-800 sm:shadow-sm animate-in fade-in slide-in-from-top-4 duration-500 border-l-4 sm:border-l border-l-purple-500 sm:border-l-purple-100">
+                            <div className="hidden sm:block absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-purple-400 to-purple-600"></div>
+                            <div className="p-4 md:p-6">
                               <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-purple-100 dark:border-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-purple-100 dark:border-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-400 flex-shrink-0">
                                     <MessageCircle className="w-5 h-5" />
                                   </div>
                                   <div>
@@ -449,12 +453,12 @@ export const LearningGuide: React.FC<LearningGuideProps> = ({
                         )}
 
                         {generatedContent[`${idx}-example`] && visibleContent[`${idx}-example`] && (
-                          <div className="relative overflow-hidden rounded-2xl border border-amber-100 dark:border-amber-900/50 bg-gradient-to-br from-amber-50/50 to-white dark:from-amber-900/10 dark:to-gray-800 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
-                            <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-amber-400 to-amber-600"></div>
-                            <div className="p-6">
+                          <div className="relative overflow-hidden sm:rounded-2xl sm:border border-amber-100 dark:border-amber-900/50 bg-amber-50/30 sm:bg-gradient-to-br sm:from-amber-50/50 sm:to-white dark:from-amber-900/10 dark:to-gray-800 sm:shadow-sm animate-in fade-in slide-in-from-top-4 duration-500 border-l-4 sm:border-l border-l-amber-500 sm:border-l-amber-100">
+                            <div className="hidden sm:block absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-amber-400 to-amber-600"></div>
+                            <div className="p-4 md:p-6">
                               <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-amber-100 dark:border-amber-800 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-amber-100 dark:border-amber-800 flex items-center justify-center text-amber-600 dark:text-amber-400 flex-shrink-0">
                                     <Sparkles className="w-5 h-5" />
                                   </div>
                                   <div>
@@ -508,7 +512,7 @@ export const LearningGuide: React.FC<LearningGuideProps> = ({
       {/* Completion Modal */}
       {/* Next Steps */}
       {progress === 100 && (
-        <div className="bg-gradient-to-br from-primary-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 border border-primary-100 dark:border-gray-700 text-center animate-in zoom-in duration-500">
+        <div className="bg-gradient-to-br from-primary-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-2xl p-4 md:p-6 border border-primary-100 dark:border-gray-700 text-center animate-in zoom-in duration-500">
           <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-8 h-8" />
           </div>
@@ -541,14 +545,14 @@ export const LearningGuide: React.FC<LearningGuideProps> = ({
               onClick={onGenerateQuiz}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors shadow-sm hover:shadow font-medium"
             >
-              <Brain className="w-5 h-5" />
+              <Brain className="w-5 h-5 flex-shrink-0" />
               Take a Quiz
             </button>
             <button
               onClick={onGenerateFlashcards}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm hover:shadow font-medium"
             >
-              <BookOpen className="w-5 h-5" />
+              <BookOpen className="w-5 h-5 flex-shrink-0" />
               Review Flashcards
             </button>
           </div>

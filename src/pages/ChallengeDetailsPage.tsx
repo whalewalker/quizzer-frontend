@@ -113,7 +113,7 @@ export const ChallengeDetailsPage = () => {
       </button>
 
       {/* Challenge Header */}
-      <div className="card bg-gradient-to-br from-primary-600 to-primary-800 dark:from-primary-900 dark:to-primary-950 p-8">
+      <div className="card bg-gradient-to-br from-primary-600 to-primary-800 dark:from-primary-900 dark:to-primary-950 p-6 md:p-8">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-3">
@@ -148,7 +148,7 @@ export const ChallengeDetailsPage = () => {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Challenge Info */}
-          <div className="card dark:bg-gray-800">
+          <div className="card dark:bg-gray-800 p-4 md:p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Challenge Details</h2>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -255,7 +255,7 @@ export const ChallengeDetailsPage = () => {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Actions */}
-          <div className="card dark:bg-gray-800">
+          <div className="card dark:bg-gray-800 p-4 md:p-6">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Actions</h3>
             <div className="space-y-3">
               {!challenge.completed && (
@@ -290,7 +290,7 @@ export const ChallengeDetailsPage = () => {
 
           {/* Leaderboard Preview */}
           {leaderboard && leaderboard.entries.length > 0 && (
-            <div className="card dark:bg-gray-800">
+            <div className="card dark:bg-gray-800 p-4 md:p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900 dark:text-white">Top Ranked</h3>
                 <button 
@@ -337,7 +337,7 @@ export const ChallengeDetailsPage = () => {
           )}
 
           {/* Time Remaining */}
-          <div className="card bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-red-200 dark:border-red-800">
+          <div className="card bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-red-200 dark:border-red-800 p-4 md:p-6">
             <div className="flex items-center gap-3 mb-2">
               <Clock className="w-5 h-5 text-red-600 dark:text-red-400" />
               <h3 className="font-semibold text-gray-900 dark:text-white">Time Remaining</h3>

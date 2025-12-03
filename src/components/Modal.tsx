@@ -44,11 +44,11 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
           <X className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center justify-between p-6 pb-0">
+        <div className="flex items-center justify-between p-4 md:p-6 pb-0">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white pr-8">{title}</h3>
         </div>
         
-        <div className="p-6 text-gray-700 dark:text-gray-300">
+        <div className="p-4 md:p-6 text-gray-700 dark:text-gray-300">
           {children}
         </div>
 

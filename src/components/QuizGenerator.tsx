@@ -103,7 +103,7 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
   };
 
   return (
-    <div className="card border border-primary-200 dark:border-gray-700 shadow-sm dark:bg-gray-800">
+    <div className="card border border-primary-200 dark:border-gray-700 shadow-sm dark:bg-gray-800 p-4 md:p-6">
       <div className="flex items-center gap-3 mb-6">
         <div className="p-2 bg-primary-100 rounded-lg">
           <Brain className="w-6 h-6 text-primary-600" />
@@ -119,11 +119,11 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+      <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto pb-1">
         <button
           type="button"
           onClick={() => setMode('topic')}
-          className={`px-6 py-3 font-semibold transition-all rounded-t-lg ${
+          className={`px-4 md:px-6 py-3 font-semibold transition-all rounded-t-lg whitespace-nowrap ${
             mode === 'topic'
               ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-400'
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -134,7 +134,7 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
         <button
           type="button"
           onClick={() => setMode('content')}
-          className={`px-6 py-3 font-semibold transition-all rounded-t-lg ${
+          className={`px-4 md:px-6 py-3 font-semibold transition-all rounded-t-lg whitespace-nowrap ${
             mode === 'content'
               ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-400'
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -145,7 +145,7 @@ export const QuizGenerator: React.FC<QuizGeneratorProps> = ({ onGenerate, loadin
         <button
           type="button"
           onClick={() => setMode('files')}
-          className={`px-6 py-3 font-semibold transition-all rounded-t-lg ${
+          className={`px-4 md:px-6 py-3 font-semibold transition-all rounded-t-lg whitespace-nowrap ${
             mode === 'files'
               ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-400'
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'

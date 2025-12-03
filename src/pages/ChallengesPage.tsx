@@ -142,7 +142,7 @@ export const ChallengesPage = () => {
         {/* Challenges Section */}
         <section className="lg:col-span-2 space-y-6">
 
-          <div className="card dark:bg-gray-800">
+          <div className="card dark:bg-gray-800 p-4 md:p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
@@ -334,7 +334,7 @@ export const ChallengesPage = () => {
 
         {/* Leaderboard Sidebar */}
         <aside className="space-y-6">
-          <div className="card dark:bg-gray-800">
+          <div className="card dark:bg-gray-800 p-4 md:p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
@@ -417,7 +417,7 @@ export const ChallengesPage = () => {
           {/* Info Cards */}
           <div className="space-y-4">
 
-            <div className="card bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+            <div className="card bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800 p-4 md:p-6">
               <div className="flex items-start gap-3">
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                   <Trophy className="w-5 h-5 text-blue-600 dark:text-blue-400" />

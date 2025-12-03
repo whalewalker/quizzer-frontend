@@ -26,7 +26,7 @@ export const InlineNoteInput: React.FC<InlineNoteInputProps> = ({
 
   return (
     <div
-      className="fixed z-50 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-3 w-72 animate-in fade-in zoom-in duration-200"
+      className="fixed z-50 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-3 w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2 animate-in fade-in zoom-in duration-200"
       style={{
         left: position.x,
         top: position.y + 10, // Offset slightly below the selection

@@ -83,7 +83,7 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
   };
 
   return (
-    <div className="card border border-primary-200 shadow-sm">
+    <div className="card border border-primary-200 shadow-sm p-4 md:p-6">
       <div className="flex items-center gap-3 mb-6">
         <div className="p-2 bg-primary-100 rounded-lg">
           <Layers className="w-6 h-6 text-primary-600" />
@@ -91,11 +91,11 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
         <h2 className="text-2xl font-bold text-gray-900">Generate New Flashcard Set</h2>
       </div>
 
-      <div className="flex gap-2 mb-6 border-b border-gray-200">
+      <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto pb-1">
         <button
           type="button"
           onClick={() => setMode('topic')}
-          className={`px-6 py-3 font-semibold transition-all rounded-t-lg ${
+          className={`px-4 md:px-6 py-3 font-semibold transition-all rounded-t-lg whitespace-nowrap ${
             mode === 'topic'
               ? 'text-primary-600 border-b-3 border-primary-600 bg-primary-50'
               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
@@ -106,7 +106,7 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
         <button
           type="button"
           onClick={() => setMode('content')}
-          className={`px-6 py-3 font-semibold transition-all rounded-t-lg ${
+          className={`px-4 md:px-6 py-3 font-semibold transition-all rounded-t-lg whitespace-nowrap ${
             mode === 'content'
               ? 'text-primary-600 border-b-3 border-primary-600 bg-primary-50'
               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
@@ -117,7 +117,7 @@ export const FlashcardGenerator: React.FC<FlashcardGeneratorProps> = ({
         <button
           type="button"
           onClick={() => setMode('files')}
-          className={`px-6 py-3 font-semibold transition-all rounded-t-lg ${
+          className={`px-4 md:px-6 py-3 font-semibold transition-all rounded-t-lg whitespace-nowrap ${
             mode === 'files'
               ? 'text-primary-600 border-b-3 border-primary-600 bg-primary-50'
               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
