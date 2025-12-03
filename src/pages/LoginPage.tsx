@@ -65,8 +65,11 @@ export const LoginPage = () => {
     try {
       // Check if mobile device
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const isIpAddress = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(window.location.hostname);
 
-      if (isMobile) {
+      // If mobile and NOT an IP address (meaning we are on a proper domain like vercel.app), use redirect
+      // We also exclude localhost to be safe, though isIpAddress handles 127.0.0.1
+      if (isMobile && !isIpAddress && window.location.hostname !== 'localhost') {
         await authService.initiateGoogleRedirect();
         // Redirect happens, so no need to navigate here
         return;

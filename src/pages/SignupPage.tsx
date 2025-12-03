@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { analytics } from '../services/analytics.service';
 import { authService } from '../services/auth.service';
@@ -13,16 +13,49 @@ export const SignupPage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [checkingRedirect, setCheckingRedirect] = useState(true);
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  useEffect(() => {
+    const checkGoogleRedirect = async () => {
+      try {
+        const user = await authService.handleGoogleRedirect();
+        if (user) {
+          login(user);
+          analytics.trackAuthSignup('google', true);
+          if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
+            navigate('/admin');
+          } else {
+            navigate('/dashboard');
+          }
+        }
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.message || 'Google sign-up failed. Please try again.';
+        setError(errorMessage);
+        analytics.trackAuthSignup('google', false, errorMessage);
+      } finally {
+        setCheckingRedirect(false);
+      }
+    };
 
+    checkGoogleRedirect();
+  }, [login, navigate]);
 
   const handleGoogleSignUp = async () => {
     setError('');
     setGoogleLoading(true);
 
     try {
+      // Check if mobile device
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const isIpAddress = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(window.location.hostname);
+
+      if (isMobile && !isIpAddress && window.location.hostname !== 'localhost') {
+        await authService.initiateGoogleRedirect();
+        return;
+      }
+
       const user = await authService.googleSignIn();
       login(user);
       analytics.trackAuthSignup('google', true);
@@ -36,7 +69,9 @@ export const SignupPage = () => {
       setError(errorMessage);
       analytics.trackAuthSignup('google', false, errorMessage);
     } finally {
-      setGoogleLoading(false);
+      if (!(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent))) {
+        setGoogleLoading(false);
+      }
     }
   };
 
@@ -62,6 +97,17 @@ export const SignupPage = () => {
       setLoading(false);
     }
   };
+
+  if (checkingRedirect) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Verifying authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">

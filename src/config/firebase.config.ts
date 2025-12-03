@@ -1,10 +1,15 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
+const isIpAddress = (hostname: string) =>
+  /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(hostname);
+
 const firebaseConfig = {
   apiKey: "AIzaSyCC2AsgmVpm_wpS-MoommA3g4cKpsTOCBY",
   authDomain:
-    typeof window !== "undefined" && window.location.hostname !== "localhost"
+    typeof window !== "undefined" &&
+    window.location.hostname !== "localhost" &&
+    !isIpAddress(window.location.hostname)
       ? window.location.hostname
       : "quizzer-609ff.firebaseapp.com",
   projectId: "quizzer-609ff",
