@@ -3,7 +3,10 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCC2AsgmVpm_wpS-MoommA3g4cKpsTOCBY",
-  authDomain: "quizzer-609ff.firebaseapp.com",
+  authDomain:
+    typeof window !== "undefined" && window.location.hostname !== "localhost"
+      ? window.location.hostname
+      : "quizzer-609ff.firebaseapp.com",
   projectId: "quizzer-609ff",
   storageBucket: "quizzer-609ff.firebasestorage.app",
   messagingSenderId: "208450280402",
