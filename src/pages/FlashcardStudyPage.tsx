@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { analytics } from '../services/analytics.service';
+import { useState } from 'react';
+
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { flashcardService } from '../services/flashcard.service';
@@ -23,16 +22,8 @@ export const FlashcardStudyPage = () => {
   const [cardResponses, setCardResponses] = useState<Array<{ cardIndex: number; response: 'know' | 'dont-know' | 'skipped' }>>([]);
   const [showResults, setShowResults] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { user } = useAuth();
+  // const { user } = useAuth();
 
-  useEffect(() => {
-    if (flashcardSet && user) {
-      analytics.trackFlashcardStudyStarted(flashcardSet.id, flashcardSet.title);
-      if (flashcardSet.cards.length > 0) {
-        analytics.trackFlashcardViewed(flashcardSet.id, '0'); // Use index 0
-      }
-    }
-  }, [flashcardSet, user]);
 
   if (error) {
     toast.error('Failed to load flashcard set');
@@ -44,7 +35,6 @@ export const FlashcardStudyPage = () => {
       const newIndex = currentCardIndex + 1;
       setCurrentCardIndex(newIndex);
       setIsFlipped(false);
-      analytics.trackFlashcardViewed(flashcardSet!.id, newIndex.toString());
     } else if (flashcardSet && currentCardIndex === flashcardSet.cards.length - 1) {
       // Last card - finish session
       const hasResponse = cardResponses.some(r => r.cardIndex === currentCardIndex);
@@ -61,7 +51,6 @@ export const FlashcardStudyPage = () => {
       const newIndex = currentCardIndex - 1;
       setCurrentCardIndex(newIndex);
       setIsFlipped(false);
-      analytics.trackFlashcardViewed(flashcardSet!.id, newIndex.toString());
     }
   };
 

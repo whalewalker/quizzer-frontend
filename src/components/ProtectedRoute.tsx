@@ -9,9 +9,8 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
-  requireOnboarding = true 
 }) => {
-  const { isAuthenticated, user, loading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -24,14 +23,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Redirect to onboarding if not completed and required
   // Admins bypass this check
-  if (
-    requireOnboarding && 
-    !user?.onboardingCompleted && 
-    user?.role !== 'ADMIN' && 
-    user?.role !== 'SUPER_ADMIN'
-  ) {
-    return <Navigate to="/onboarding" replace />;
-  }
+
 
   return <>{children}</>;
 };

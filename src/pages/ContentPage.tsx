@@ -12,7 +12,6 @@ import { format } from 'date-fns';
 
 import { contentService, type Content } from '../services/content.service';
 import toast from 'react-hot-toast';
-import { analytics } from '../services/analytics.service';
 import { Modal } from '../components/Modal';
 import { InlineNoteInput } from '../components/InlineNoteInput';
 import { LearningGuide } from '../components/LearningGuide';
@@ -156,13 +155,6 @@ export const ContentPage = () => {
     navigate('/dashboard');
   }
 
-  useEffect(() => {
-    if (content) {
-      // Default to 'text' if type is missing, or infer from content structure
-      const contentType = (content as any).type || 'text'; 
-      analytics.trackContentView(content.id, contentType, content.title);
-    }
-  }, [content]);
 
   useEffect(() => {
     const handleSelection = () => {

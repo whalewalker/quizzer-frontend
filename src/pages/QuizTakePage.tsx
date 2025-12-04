@@ -8,7 +8,6 @@ import { ArrowLeft, CheckCircle, XCircle, Brain, Trophy, Target, ChevronLeft, Ch
 import { XPProgressBar } from '../components/XPProgressBar';
 import { QuestionRenderer } from '../components/QuestionRenderer';
 import { useQuiz } from '../hooks';
-import { analytics } from '../services/analytics.service';
 
 export const QuizTakePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -80,9 +79,6 @@ export const QuizTakePage = () => {
         setTimeRemaining(quiz.timeLimit);
       }
     }
-
-    // Track quiz attempt started
-    analytics.trackQuizAttemptStarted(quiz.id, quiz.title);
   }, [quiz, id]);
 
 
@@ -225,8 +221,8 @@ export const QuizTakePage = () => {
       }
       
       // Calculate duration if possible, otherwise 0
-      const duration = quiz.timeLimit && timeRemaining !== null ? quiz.timeLimit - timeRemaining : 0;
-      analytics.trackQuizAttemptCompleted(id, submissionResult.score, submissionResult.totalQuestions, duration);
+      // Calculate duration if possible, otherwise 0
+      // const duration = quiz.timeLimit && timeRemaining !== null ? quiz.timeLimit - timeRemaining : 0;
     } catch (_error) {
       toast.error('Failed to submit quiz. Please try again.');
     } finally {

@@ -32,7 +32,7 @@ export const AssessmentPopup = () => {
         if (data.status === 'NOT_STARTED') {
           // If onboarding hasn't started (no task), redirect to onboarding
           // But don't redirect if we're on login or signup pages
-          const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
+          const isAuthPage = location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/admin';
           if (location.pathname !== '/onboarding' && !isAuthPage) {
             navigate('/onboarding');
           }

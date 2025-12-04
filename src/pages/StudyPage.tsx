@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { contentService } from '../services';
-import { analytics } from '../services/analytics.service';
 import { useContents, usePopularTopics, useTaskStatus } from '../hooks';
 import { Sparkles, FileText, Upload, Plus, BookOpen, Zap, Calendar, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
@@ -203,8 +202,6 @@ export const StudyPage = () => {
     ), { duration: Infinity });
 
     try {
-      analytics.trackFileUpload(file.name, file.size, file.type);
-      
       // Update progress to show we are working
       setTimeout(() => {
          toast.custom((t) => (
@@ -230,7 +227,6 @@ export const StudyPage = () => {
         />
       ), { id: toastId });
 
-      analytics.trackFileUploadResult(file.name, true);
       navigate(`/content/${content.id}`);
     } catch (error: any) {
 
@@ -243,7 +239,6 @@ export const StudyPage = () => {
           status="error"
         />
       ), { id: toastId });
-      analytics.trackFileUploadResult(file.name, false, error.message || 'Upload failed');
     } finally {
       setContentLoading(false);
     }

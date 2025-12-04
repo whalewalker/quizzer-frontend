@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ArrowRight, Check, BookOpen, GraduationCap } from 'lucide-react';
@@ -89,15 +89,7 @@ export const OnboardingPage = () => {
     }
   };
 
-  // Auto-redirect effect for Step 4
-  useEffect(() => {
-    if (step === 4) {
-      const timer = setTimeout(() => {
-        navigate('/dashboard');
-      }, 3000); // 3 seconds delay
-      return () => clearTimeout(timer);
-    }
-  }, [step, navigate]);
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
@@ -220,7 +212,7 @@ export const OnboardingPage = () => {
                 </motion.div>
               )}
 
-              {/* Step 4: Completion (Auto-redirect) */}
+              {/* Step 4: Completion (Manual redirect) */}
               {step === 4 && (
                 <motion.div
                   key="step4"
@@ -241,14 +233,19 @@ export const OnboardingPage = () => {
                     </p>
                   </div>
 
-                  <div className="flex flex-col items-center gap-3">
+                  <div className="flex flex-col items-center gap-6">
                     <div className="flex items-center gap-2 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 px-4 py-2 rounded-full">
                       <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" />
-                      Generating your assessment...
+                      Assessment generated successfully!
                     </div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                      Redirecting to your dashboard in a moment
-                    </p>
+                    
+                    <button
+                      onClick={() => navigate('/dashboard')}
+                      className="bg-primary-600 text-white px-8 py-3 rounded-xl font-semibold text-lg hover:bg-primary-700 transition-all shadow-lg hover:shadow-primary-500/25 flex items-center gap-2 transform hover:-translate-y-0.5"
+                    >
+                      Go to Dashboard
+                      <ArrowRight className="w-5 h-5" />
+                    </button>
                   </div>
                 </motion.div>
               )}

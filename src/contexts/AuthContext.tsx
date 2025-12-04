@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useSyncExternalStore, useMemo, useCallback } from 'react';
 import type { User } from '../types';
 import { authService } from '../services/auth.service';
-import { analytics } from '../services/analytics.service';
 
 interface AuthContextType {
   user: User | null;
@@ -60,18 +59,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const login = useCallback((userData: User) => {
     authStore.setState({ user: userData });
     authService.saveAuthData(userData);
-    analytics.identify(userData.id);
-    analytics.trackAuthLogin('email', true);
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      await authService.logout();
-    } catch (_error) {
-
-    }
     authStore.setState({ user: null });
-    analytics.reset();
   }, []);
 
   const value = useMemo(() => ({

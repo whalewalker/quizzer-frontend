@@ -1,19 +1,18 @@
-import { useEffect, lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { analytics } from './services/analytics.service';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
 import { MaintenanceBanner } from './components/MaintenanceOverlay';
-import { AssessmentPopup } from './components/AssessmentPopup';
+
 
 // Lazy load all page components for code splitting
 const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
 const SignupPage = lazy(() => import('./pages/SignupPage').then(m => ({ default: m.SignupPage })));
-const OnboardingPage = lazy(() => import('./pages/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
+
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
 const StudyPage = lazy(() => import('./pages/StudyPage').then(m => ({ default: m.StudyPage })));
 const ContentPage = lazy(() => import('./pages/ContentPage').then(m => ({ default: m.ContentPage })));
@@ -64,14 +63,6 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  useEffect(() => {
-    // Initialize Analytics
-    analytics.init();
-
-    // Placeholder for FCM token registration
-    // In a real app, you would initialize Firebase here and get the token
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
@@ -88,27 +79,19 @@ function App() {
 }
 
 function AppRoutes() {
-  const { user } = useAuth(); // Now we can use the hook
+  // const { user } = useAuth(); // Now we can use the hook
 
 
 
 
   return (
     <Suspense fallback={<PageLoader />}>
-      {user && <AssessmentPopup />}
+
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         
-        {/* Onboarding - Protected but outside main layout */}
-        <Route 
-          path="/onboarding" 
-          element={
-            <ProtectedRoute requireOnboarding={false}>
-              <OnboardingPage />
-            </ProtectedRoute>
-          } 
-        />
+
         
         <Route
           path="/"
@@ -118,13 +101,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         >
-          <Route index element={
-            user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' 
-              ? <Navigate to="/admin" replace /> 
-              : !user?.onboardingCompleted 
-                ? <Navigate to="/onboarding" replace />
-                : <Navigate to="/dashboard" replace />
-          } />
+          <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="study" element={<StudyPage />} />
           <Route path="discover" element={<DiscoverPage />} />
@@ -220,13 +197,7 @@ function AppRoutes() {
           />
         </Route>
 
-        <Route path="*" element={
-          user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' 
-            ? <Navigate to="/admin" replace /> 
-            : !user?.onboardingCompleted 
-              ? <Navigate to="/onboarding" replace />
-              : <Navigate to="/dashboard" replace />
-        } />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Suspense>
   );
