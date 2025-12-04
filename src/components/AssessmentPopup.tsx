@@ -31,7 +31,9 @@ export const AssessmentPopup = () => {
         
         if (data.status === 'NOT_STARTED') {
           // If onboarding hasn't started (no task), redirect to onboarding
-          if (location.pathname !== '/onboarding') {
+          // But don't redirect if we're on login or signup pages
+          const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
+          if (location.pathname !== '/onboarding' && !isAuthPage) {
             navigate('/onboarding');
           }
         } else if (data.status === 'COMPLETED' && data.quizId) {
