@@ -512,7 +512,7 @@ export const StudyPage = () => {
                     <div>
                       <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Upload Documents</h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Upload PDF, DOCX, or TXT files. The system will extract and organize the content into study materials.
+                        Upload PDF files. The system will extract and organize the content into study materials.
                       </p>
                     </div>
                   </div>
@@ -540,7 +540,7 @@ export const StudyPage = () => {
                     Click to upload
                   </label>
                   <span className="text-gray-600 dark:text-gray-300 text-lg"> or drag and drop</span>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">PDF, DOCX, or TXT (max 5MB)</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">PDF (max 5MB)</p>
                   {file && (
                     <div className="mt-6 p-4 bg-white dark:bg-gray-700 rounded-xl border-2 border-primary-300 dark:border-primary-600 shadow-sm">
                       <p className="text-base font-semibold text-gray-900 dark:text-white">{file.name}</p>

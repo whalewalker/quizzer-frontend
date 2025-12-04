@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { BookOpen, Highlighter, Brain, ArrowLeft, Loader2, StickyNote, Trash2, Calendar, Check, Edit3, Save, X, MoreVertical } from 'lucide-react';
+import { BookOpen, Highlighter, Brain, ArrowLeft, StickyNote, Trash2, Calendar, Check, X, MoreVertical } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -140,11 +140,7 @@ export const ContentPage = () => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [showNotes, setShowNotes] = useState(window.innerWidth >= 1280);
   const [selectedColor, setSelectedColor] = useState<'yellow' | 'green' | 'pink'>('yellow');
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState('');
-  const [editedTitle, setEditedTitle] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
 
   // Inline Note States
   const [inlineNote, setInlineNote] = useState<{ id?: string; text: string; position: { x: number; y: number } } | null>(null);
@@ -367,45 +363,11 @@ export const ContentPage = () => {
     });
   };
 
-  const handleEdit = () => {
-    if (!content) return;
-    setEditedTitle(content.title);
-    setEditedContent(content.content);
-    setIsEditing(true);
-    setToolbarPosition(null);
-  };
 
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    setEditedTitle('');
-    setEditedContent('');
-  };
 
-  const handleSave = async () => {
-    if (!id || !content) return;
-    
-    setIsSaving(true);
-    const loadingToast = toast.loading('Saving changes...');
-    
-    try {
-      await contentService.update(id, {
-        title: editedTitle,
-        content: editedContent,
-        topic: content.topic
-      });
-      
-      toast.success('Content updated successfully!', { id: loadingToast });
-      setIsEditing(false);
-      refetch();
-      // Invalidate contents list to reflect changes
-      await queryClient.invalidateQueries({ queryKey: ['contents'] });
-    } catch (_error) {
 
-      toast.error('Failed to save changes', { id: loadingToast });
-    } finally {
-      setIsSaving(false);
-    }
-  };
+
+
 
   const handleDelete = () => {
     setIsDeleteContentModalOpen(true);
@@ -429,25 +391,7 @@ export const ContentPage = () => {
     }
   };
 
-  // Keyboard shortcuts - fixed dependencies
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isEditing) return;
-      
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        handleSave();
-      }
-      
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        handleCancelEdit();
-      }
-    };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isEditing]); // Only isEditing needed - handlers use latest values via closure
 
   const renderNotesContent = () => (
     <>
@@ -613,9 +557,7 @@ export const ContentPage = () => {
           </div>
 
           <div className="flex items-center gap-2">
-             {!isEditing ? (
-                <>
-                  {content.quizId ? (
+            {content.quizId ? (
                     <button 
                       onClick={() => navigate(`/quiz/${content.quizId}`)}
                       className="flex items-center gap-2 px-2 sm:px-4 py-2 bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm text-sm font-medium"
@@ -658,13 +600,6 @@ export const ContentPage = () => {
                   <div className="hidden sm:flex items-center gap-2">
                     <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
                     <button 
-                      onClick={handleEdit}
-                      className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                      title="Edit Content"
-                    >
-                      <Edit3 className="w-5 h-5" />
-                    </button>
-                    <button 
                       onClick={() => setShowNotes(!showNotes)}
                       className={`p-2 rounded-lg transition-colors ${showNotes ? 'text-primary-600 bg-primary-50 dark:text-primary-400 dark:bg-primary-900/20' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'}`}
                       title="Toggle Notes"
@@ -687,12 +622,6 @@ export const ContentPage = () => {
                     </button>
                     <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 hidden group-hover:block group-focus-within:block z-50">
                       <button 
-                        onClick={handleEdit}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
-                      >
-                        <Edit3 className="w-4 h-4" /> Edit
-                      </button>
-                      <button 
                         onClick={() => setShowNotes(!showNotes)}
                         className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
                       >
@@ -706,26 +635,6 @@ export const ContentPage = () => {
                       </button>
                     </div>
                   </div>
-                </>
-              ) : (
-                <>
-                  <button 
-                    onClick={handleCancelEdit}
-                    className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-sm font-medium"
-                    disabled={isSaving}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    onClick={handleSave}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-sm text-sm font-medium"
-                    disabled={isSaving}
-                  >
-                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    Save Changes
-                  </button>
-                </>
-              )}
           </div>
         </div>
       </div>
@@ -734,38 +643,7 @@ export const ContentPage = () => {
         {/* Main Content */}
         <div className="flex-1 min-w-0">
           <div ref={contentRef} onClick={handleContentClick} className="bg-white dark:bg-gray-800 sm:rounded-2xl sm:shadow-sm sm:border border-gray-200 dark:border-gray-700 p-0 sm:p-8 md:p-12 min-h-[500px]">
-            {isEditing ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
-                  <input
-                    type="text"
-                    value={editedTitle}
-                    onChange={(e) => setEditedTitle(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Content title"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Content (Markdown)</label>
-                  <textarea
-                    ref={textareaRef}
-                    value={editedContent}
-                    onChange={(e) => setEditedContent(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm min-h-[400px] resize-y"
-                    placeholder="Write your content in markdown..."
-                  />
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Preview</h4>
-                  <div className="prose prose-sm max-w-none bg-white dark:bg-gray-800 rounded p-4 border border-gray-200 dark:border-gray-700">
-                    <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
-                      {editedContent || '*No content to preview*'}
-                    </ReactMarkdown>
-                  </div>
-                </div>
-              </div>
-            ) : content.learningGuide ? (
+            {content.learningGuide ? (
               <LearningGuide 
                 key={content.id}
                 guide={content.learningGuide} 
@@ -834,7 +712,7 @@ export const ContentPage = () => {
         </div>
 
         {/* Notes Sidebar / Drawer */}
-        {showNotes && !isEditing && (
+        {showNotes && (
           <>
             {/* Desktop Sidebar */}
             <div className="w-80 flex-shrink-0 hidden xl:block">
@@ -860,7 +738,7 @@ export const ContentPage = () => {
       </div>
 
       {/* Floating Toolbar */}
-      {!isEditing && toolbarPosition && (
+      {toolbarPosition && (
         <div
           className="floating-toolbar fixed z-50 bg-gray-900 text-white rounded-xl shadow-2xl flex items-center p-1.5 transform -translate-x-1/2 -translate-y-full animate-in fade-in zoom-in duration-200"
           style={{ left: toolbarPosition.x, top: toolbarPosition.y }}
