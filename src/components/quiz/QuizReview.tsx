@@ -1,4 +1,4 @@
-import { useRef } from "react";
+
 import { CheckCircle, XCircle, Target } from "lucide-react";
 import { QuestionRenderer } from "../QuestionRenderer";
 import type { Quiz, QuizResult, AnswerValue } from "../../types";

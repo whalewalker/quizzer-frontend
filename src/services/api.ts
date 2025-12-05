@@ -16,23 +16,19 @@ export const apiClient = axios.create({
 //   csrfToken = token;
 // };
 
-// Request interceptor to add CSRF token
-// apiClient.interceptors.request.use(
-//   (config) => {
-//     if (
-//       csrfToken &&
-//       ["post", "put", "delete", "patch"].includes(
-//         config.method?.toLowerCase() || ""
-//       )
-//     ) {
-//       config.headers["x-csrf-token"] = csrfToken;
-//     }
-//     return config;
-//   },
-//   (error) => {
-//     return Promise.reject(error);
-//   }
-// );
+// Request interceptor to add Authorization token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // Response interceptor to handle errors
 apiClient.interceptors.response.use(
@@ -52,5 +48,5 @@ apiClient.interceptors.response.use(
       window.location.href = "/login";
     }
     return Promise.reject(error);
-  },
+  }
 );
