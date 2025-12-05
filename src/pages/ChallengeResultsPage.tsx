@@ -145,6 +145,11 @@ export const ChallengeResultsPage = () => {
   const isGood = finalScore >= 70;
   const isPass = finalScore >= 50;
 
+  let gradeColor = "text-rose-400"; // Softer red
+  if (isExcellent) gradeColor = "text-emerald-400";
+  else if (isGood) gradeColor = "text-blue-400";
+  else if (isPass) gradeColor = "text-amber-400";
+  
   return (
     <div className="space-y-6 pb-8 md:pb-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Confetti */}
@@ -173,7 +178,8 @@ export const ChallengeResultsPage = () => {
           <div className="absolute top-4 right-4 md:top-6 md:right-6">
             <button
               onClick={handleShare}
-              className="p-2 md:px-4 md:py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full md:rounded-xl text-white transition-all flex items-center gap-2 border border-white/10"
+              data-html2canvas-ignore="true"
+              className="p-2 md:px-4 md:py-2 bg-white/10 hover:bg-white/20 rounded-full md:rounded-xl text-white transition-all flex items-center gap-2 border border-white/10"
               aria-label="Share Results"
             >
               <Share2 className="w-5 h-5" />
@@ -185,7 +191,7 @@ export const ChallengeResultsPage = () => {
             {/* Trophy Icon with Glow */}
             <div className="relative mb-6">
               <div className="absolute inset-0 bg-white/20 blur-xl rounded-full"></div>
-              <div className="relative inline-flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/10 border border-white/20 shadow-2xl backdrop-blur-sm animate-float">
+              <div className="relative inline-flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/10 border border-white/20 shadow-2xl animate-float">
                 <Trophy className="w-10 h-10 md:w-12 md:h-12 text-white drop-shadow-lg" />
               </div>
             </div>
@@ -234,27 +240,18 @@ export const ChallengeResultsPage = () => {
                       stroke="currentColor"
                       strokeWidth="10"
                       fill="transparent"
-                      strokeDasharray={`${2 * Math.PI * (window.innerWidth < 768 ? 80 : 96)}`} // Approx radius calculation
-                      // Simpler radius approach for SVG consistency:
+                      strokeDasharray={`${2 * Math.PI * (window.innerWidth < 768 ? 80 : 96)}`}
                       style={{
                         strokeDasharray: '280', 
                         strokeDashoffset: `${280 * (1 - finalScore / 100)}` 
                       }} 
-                      pathLength={280} // Explicit path length for easy calcs
-                      className={`${
-                        isExcellent
-                          ? "text-green-400"
-                          : isGood
-                            ? "text-blue-300"
-                            : isPass
-                              ? "text-yellow-300"
-                              : "text-red-300"
-                      } transition-all duration-1000 ease-out shadow-[0_0_10px_currentColor]`}
+                      pathLength={280}
+                      className={`${gradeColor} transition-all duration-1000 ease-out shadow-[0_0_10px_currentColor]`}
                       strokeLinecap="round"
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-                    <span className="text-5xl md:text-6xl font-bold text-white tracking-tighter">
+                    <span className="text-5xl md:text-6xl font-bold tracking-tighter text-white">
                       {finalScore}%
                     </span>
                     <span className="text-sm font-medium text-white/70 uppercase tracking-widest mt-1">
@@ -266,7 +263,6 @@ export const ChallengeResultsPage = () => {
 
               {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-3 md:gap-4 w-full order-2 md:order-none">
-                {/* Stat Cards - Glassmorphism */}
                 {[
                   {
                     icon: TrendingUp,
@@ -274,33 +270,37 @@ export const ChallengeResultsPage = () => {
                     value: progress.percentile !== null && progress.percentile !== undefined 
                       ? `Top ${Math.round(100 - progress.percentile)}%`
                       : "-",
-                    color: "text-blue-200"
+                    color: "text-blue-200",
+                    valueColor: "text-white"
                   },
                   {
                     icon: Sparkles,
                     label: "XP Earned",
                     value: `+${challenge.reward}`,
-                    color: "text-yellow-200"
+                    color: "text-yellow-200",
+                    valueColor: "text-white"
                   },
                   {
                     icon: Target,
                     label: "Completed",
                     value: `${progress.completedQuizzes}/${progress.totalQuizzes}`,
-                    color: "text-green-200"
+                    color: "text-green-200",
+                    valueColor: "text-white"
                   },
                   {
                     icon: Award,
                     label: "Grade",
                     value: isExcellent ? "A+" : isGood ? "A" : isPass ? "B" : "C",
-                    color: "text-purple-200"
+                    color: gradeColor,
+                    valueColor: gradeColor // Dynamic Grade Color
                   }
                 ].map((stat, idx) => (
-                  <div key={idx} className="bg-white/10 backdrop-blur-md rounded-2xl p-4 md:p-5 flex flex-col justify-between border border-white/5 hover:bg-white/15 transition-colors group">
+                  <div key={idx} className="bg-white/10 rounded-2xl p-4 md:p-5 flex flex-col justify-between border border-white/5 hover:bg-white/15 transition-colors group">
                     <div className="flex items-center gap-2 mb-2 text-primary-100">
                        <stat.icon className={`w-4 h-4 ${stat.color} opacity-80`} />
                        <span className="text-xs font-medium uppercase tracking-wider opacity-70">{stat.label}</span>
                     </div>
-                    <div className="text-xl md:text-2xl font-bold text-white tracking-tight">
+                    <div className={`text-xl md:text-2xl font-bold tracking-tight ${stat.valueColor}`}>
                       {stat.value}
                     </div>
                   </div>
@@ -348,9 +348,19 @@ export const ChallengeResultsPage = () => {
                         </p>
                       </div>
                       
-                      <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end ml-0 sm:ml-4 pl-8 sm:pl-0 border-t sm:border-0 border-gray-100 dark:border-gray-700 pt-3 sm:pt-0 mt-1 sm:mt-0">
-                        {/* Removed progress circle section as requested */}
-                      </div>
+                        <button
+                          onClick={() => {
+                            if (quiz) {
+                              navigate(
+                                `/quiz/${quiz.quizId}/results/${attempt.attemptId}?challengeId=${id}`
+                              );
+                            }
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/40 rounded-lg transition-colors border border-primary-100 dark:border-primary-800"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span>Review</span>
+                        </button>
                     </div>
                   </div>
                 );
@@ -383,7 +393,17 @@ export const ChallengeResultsPage = () => {
               </button>
 
               <button
-                onClick={() => navigate("/attempts")}
+                onClick={() => {
+                  const firstAttempt = progress.quizAttempts[0];
+                  const firstQuiz = challenge.quizzes?.[0];
+                  if (firstAttempt && firstQuiz) {
+                    navigate(
+                      `/quiz/${firstQuiz.quizId}/results/${firstAttempt.attemptId}?challengeId=${id}`
+                    );
+                  } else {
+                    toast.error("No attempts to review");
+                  }
+                }}
                 className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold rounded-xl border border-gray-200 dark:border-gray-600 transition-all hover:border-gray-300"
               >
                 <Eye className="w-5 h-5 text-primary-500" />

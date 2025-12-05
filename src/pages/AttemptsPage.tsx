@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import {
   LineChart,
   Line,
@@ -36,6 +36,7 @@ const COLORS = ["#3b82f6", "#10b981", "rgb(236, 72, 153)"];
 
 export function AttemptsPage() {
   const navigate = useNavigate();
+  const { id: routeChallengeId } = useParams(); // Get ID from URL path if present
   const [searchParams, setSearchParams] = useSearchParams();
   const [filterType, setFilterType] = useState<
     "all" | "quiz" | "flashcard" | "challenge"
@@ -49,11 +50,17 @@ export function AttemptsPage() {
   // Get URL params for filtering
   const quizId = searchParams.get("quizId");
   const flashcardId = searchParams.get("flashcardId");
-  const challengeId = searchParams.get("challengeId");
+  // PRIORITIZE route params for challenges:
+  const challengeId = routeChallengeId || searchParams.get("challengeId");
   const typeParam = searchParams.get("type");
 
-  // Sync filter type with URL params
+  // Sync filter type with URL params or Route params
   useEffect(() => {
+    if (routeChallengeId) {
+        setFilterType("challenge");
+        return;
+    }
+
     if (
       typeParam === "quiz" ||
       typeParam === "flashcard" ||
@@ -62,7 +69,7 @@ export function AttemptsPage() {
     ) {
       setFilterType(typeParam);
     }
-  }, [typeParam]);
+  }, [typeParam, routeChallengeId]);
 
   // Use React Query hook with filters
   const {
