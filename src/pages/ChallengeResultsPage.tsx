@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Breadcrumb } from "../components/Breadcrumb";
+import { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { challengeService } from "../services";
 import type { Challenge, ChallengeProgress } from "../types";
 import {
@@ -17,21 +16,53 @@ import {
 import Confetti from "react-confetti";
 import { useWindowSize } from "react-use";
 import toast from "react-hot-toast";
+import html2canvas from "html2canvas";
 
 export const ChallengeResultsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { width, height } = useWindowSize();
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [progress, setProgress] = useState<ChallengeProgress | null>(null);
   const [loading, setLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (id) {
       loadResults();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (challenge) {
+      // Update location state with breadcrumbs to be picked up by global Layout
+      const breadcrumbItems = [
+        {
+          label:
+            challenge.category ||
+            challenge.type.charAt(0).toUpperCase() +
+              challenge.type.slice(1) +
+              " Challenges",
+          path: "/challenges",
+        },
+        { label: challenge.title, path: `/challenges/${id}` },
+        { label: "Results" },
+      ];
+
+      // Only update if not already set to avoid infinite loop
+      if (
+        JSON.stringify((location.state as any)?.breadcrumb) !==
+        JSON.stringify(breadcrumbItems)
+      ) {
+        navigate(".", {
+          replace: true,
+          state: { ...(location.state as any), breadcrumb: breadcrumbItems },
+        });
+      }
+    }
+  }, [challenge, id, navigate, location]);
 
   const loadResults = async () => {
     try {
@@ -56,18 +87,45 @@ export const ChallengeResultsPage = () => {
     }
   };
 
-  const handleShare = () => {
-    const text = `I just completed the "${challenge?.title}" challenge and scored ${progress?.finalScore}%! 🎉`;
-    if (navigator.share) {
-      navigator
-        .share({
-          title: "Challenge Completed!",
-          text,
-        })
-        .catch(() => {});
-    } else {
-      navigator.clipboard.writeText(text);
-      toast.success("Results copied to clipboard!");
+  const handleShare = async () => {
+    if (!resultsRef.current) return;
+
+    try {
+      const canvas = await html2canvas(resultsRef.current, {
+        useCORS: true,
+        backgroundColor: null,
+        scale: 2, // Higher quality
+      });
+
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+
+        const file = new File([blob], "challenge-results.png", {
+          type: "image/png",
+        });
+
+        if (navigator.share && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: "Challenge Results",
+              text: `I just completed the "${challenge?.title}" challenge!`,
+            });
+          } catch (error) {
+            console.error("Error sharing:", error);
+          }
+        } else {
+          // Fallback to download
+          const link = document.createElement("a");
+          link.download = "challenge-results.png";
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+          toast.success("Image saved to device!");
+        }
+      });
+    } catch (error) {
+      console.error("Error generating image:", error);
+      toast.error("Failed to generate share image");
     }
   };
 
@@ -88,7 +146,7 @@ export const ChallengeResultsPage = () => {
   const isPass = finalScore >= 50;
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-6 pb-8 md:pb-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Confetti */}
       {showConfetti && (
         <Confetti
@@ -99,230 +157,200 @@ export const ChallengeResultsPage = () => {
         />
       )}
 
-      {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          {
-            label:
-              challenge.category ||
-              challenge.type.charAt(0).toUpperCase() +
-                challenge.type.slice(1) +
-                " Challenges",
-            path: "/challenges",
-          },
-          { label: challenge.title, path: `/challenges/${id}` },
-          { label: "Results" },
-        ]}
-      />
-
       {/* Results Hero */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 dark:from-primary-800 dark:via-primary-900 dark:to-gray-900 p-8 md:p-12 shadow-2xl">
-        {/* Background decoration */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute -top-20 -right-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+      <div
+        ref={resultsRef}
+        className="relative overflow-hidden rounded-3xl bg-primary-600 dark:bg-primary-900 shadow-xl border border-primary-500/30"
+      >
+        {/* Background - Clean Lighting */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-[30rem] h-[30rem] bg-white opacity-[0.03] rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-[20rem] h-[20rem] bg-white opacity-[0.03] rounded-full blur-2xl translate-y-1/3 -translate-x-1/3"></div>
         </div>
 
-        <div className="relative z-10 text-center">
-          {/* Trophy Icon */}
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 mb-6 shadow-2xl animate-bounce">
-            <Trophy className="w-12 h-12 text-white" />
+        <div className="relative z-10 px-6 py-8 md:p-12">
+          {/* Header Action Row */}
+          <div className="absolute top-4 right-4 md:top-6 md:right-6">
+            <button
+              onClick={handleShare}
+              className="p-2 md:px-4 md:py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full md:rounded-xl text-white transition-all flex items-center gap-2 border border-white/10"
+              aria-label="Share Results"
+            >
+              <Share2 className="w-5 h-5" />
+              <span className="hidden md:inline font-medium text-sm">Share</span>
+            </button>
           </div>
 
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
-            {isExcellent
-              ? "🌟 Outstanding!"
-              : isGood
-                ? "🎉 Excellent Work!"
-                : isPass
-                  ? "👍 Well Done!"
-                  : "💪 Challenge Completed!"}
-          </h1>
-
-          <p className="text-primary-100 text-lg md:text-xl mb-8 max-w-2xl mx-auto">
-            {isExcellent
-              ? "You've mastered this challenge with an exceptional score!"
-              : isGood
-                ? "You've successfully completed the challenge with a great score!"
-                : isPass
-                  ? "You've completed the challenge. Keep practicing to improve!"
-                  : "You've completed the challenge. Review the questions and try again!"}
-          </p>
-
-          {/* Score Circle */}
-          <div className="flex flex-col md:flex-row items-center justify-center gap-8 mb-8">
-            {/* Circular Progress */}
-            <div className="relative">
-              <svg className="transform -rotate-90 w-40 h-40 md:w-48 md:h-48">
-                <circle
-                  cx="96"
-                  cy="96"
-                  r="88"
-                  stroke="currentColor"
-                  strokeWidth="12"
-                  fill="transparent"
-                  className="text-white/20"
-                />
-                <circle
-                  cx="96"
-                  cy="96"
-                  r="88"
-                  stroke="currentColor"
-                  strokeWidth="12"
-                  fill="transparent"
-                  strokeDasharray={`${2 * Math.PI * 88}`}
-                  strokeDashoffset={`${2 * Math.PI * 88 * (1 - finalScore / 100)}`}
-                  className={`${
-                    isExcellent
-                      ? "text-green-400"
-                      : isGood
-                        ? "text-yellow-400"
-                        : isPass
-                          ? "text-blue-400"
-                          : "text-orange-400"
-                  } transition-all duration-1000 ease-out`}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className="text-5xl md:text-6xl font-bold text-white">
-                  {finalScore}%
-                </div>
-                <div className="text-sm text-primary-100 font-medium">
-                  Final Score
-                </div>
+          <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
+            {/* Trophy Icon with Glow */}
+            <div className="relative mb-6">
+              <div className="absolute inset-0 bg-white/20 blur-xl rounded-full"></div>
+              <div className="relative inline-flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/10 border border-white/20 shadow-2xl backdrop-blur-sm animate-float">
+                <Trophy className="w-10 h-10 md:w-12 md:h-12 text-white drop-shadow-lg" />
               </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Percentile */}
-              {progress.percentile !== undefined &&
-                progress.percentile !== null && (
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="flex items-center gap-2 mb-1">
-                      <TrendingUp className="w-4 h-4 text-yellow-400" />
-                      <span className="text-xs text-primary-100">Ranking</span>
+            <h1 className="text-3xl md:text-5xl font-bold text-white mb-2 md:mb-3 tracking-tight">
+              {isExcellent
+                ? "Outstanding Performance!"
+                : isGood
+                  ? "Great Job!"
+                  : isPass
+                    ? "Well Done!"
+                    : "Challenge Completed"}
+            </h1>
+
+            <p className="text-primary-100 text-base md:text-xl mb-8 md:mb-12 max-w-xl mx-auto leading-relaxed">
+              {isExcellent
+                ? "You've mastered this challenge with exceptional skill."
+                : isGood
+                  ? "Solid performance! You're on the right track."
+                  : isPass
+                    ? "Good effort. Keep practicing to reach the top."
+                    : "Review your answers and try again to improve."}
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 w-full items-center">
+              {/* Circular Progress */}
+              <div className="flex flex-col items-center justify-center order-1 md:order-none">
+                <div className="relative">
+                  {/* Outer Glow */}
+                  <div className="absolute inset-0 bg-white/5 blur-2xl rounded-full transform scale-110"></div>
+                  
+                  <svg className="transform -rotate-90 w-48 h-48 md:w-56 md:h-56 drop-shadow-xl relative z-10">
+                    <circle
+                      cx="50%"
+                      cy="50%"
+                      r="42%"
+                      stroke="currentColor"
+                      strokeWidth="10"
+                      fill="transparent"
+                      className="text-white/10"
+                    />
+                    <circle
+                      cx="50%"
+                      cy="50%"
+                      r="42%"
+                      stroke="currentColor"
+                      strokeWidth="10"
+                      fill="transparent"
+                      strokeDasharray={`${2 * Math.PI * (window.innerWidth < 768 ? 80 : 96)}`} // Approx radius calculation
+                      // Simpler radius approach for SVG consistency:
+                      style={{
+                        strokeDasharray: '280', 
+                        strokeDashoffset: `${280 * (1 - finalScore / 100)}` 
+                      }} 
+                      pathLength={280} // Explicit path length for easy calcs
+                      className={`${
+                        isExcellent
+                          ? "text-green-400"
+                          : isGood
+                            ? "text-blue-300"
+                            : isPass
+                              ? "text-yellow-300"
+                              : "text-red-300"
+                      } transition-all duration-1000 ease-out shadow-[0_0_10px_currentColor]`}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+                    <span className="text-5xl md:text-6xl font-bold text-white tracking-tighter">
+                      {finalScore}%
+                    </span>
+                    <span className="text-sm font-medium text-white/70 uppercase tracking-widest mt-1">
+                      Final Score
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 gap-3 md:gap-4 w-full order-2 md:order-none">
+                {/* Stat Cards - Glassmorphism */}
+                {[
+                  {
+                    icon: TrendingUp,
+                    label: "Ranking",
+                    value: progress.percentile !== null && progress.percentile !== undefined 
+                      ? `Top ${Math.round(100 - progress.percentile)}%`
+                      : "-",
+                    color: "text-blue-200"
+                  },
+                  {
+                    icon: Sparkles,
+                    label: "XP Earned",
+                    value: `+${challenge.reward}`,
+                    color: "text-yellow-200"
+                  },
+                  {
+                    icon: Target,
+                    label: "Completed",
+                    value: `${progress.completedQuizzes}/${progress.totalQuizzes}`,
+                    color: "text-green-200"
+                  },
+                  {
+                    icon: Award,
+                    label: "Grade",
+                    value: isExcellent ? "A+" : isGood ? "A" : isPass ? "B" : "C",
+                    color: "text-purple-200"
+                  }
+                ].map((stat, idx) => (
+                  <div key={idx} className="bg-white/10 backdrop-blur-md rounded-2xl p-4 md:p-5 flex flex-col justify-between border border-white/5 hover:bg-white/15 transition-colors group">
+                    <div className="flex items-center gap-2 mb-2 text-primary-100">
+                       <stat.icon className={`w-4 h-4 ${stat.color} opacity-80`} />
+                       <span className="text-xs font-medium uppercase tracking-wider opacity-70">{stat.label}</span>
                     </div>
-                    <div className="text-2xl font-bold text-white">
-                      Top {Math.round(100 - progress.percentile)}%
+                    <div className="text-xl md:text-2xl font-bold text-white tracking-tight">
+                      {stat.value}
                     </div>
                   </div>
-                )}
-
-              {/* XP Earned */}
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <div className="flex items-center gap-2 mb-1">
-                  <Sparkles className="w-4 h-4 text-yellow-400" />
-                  <span className="text-xs text-primary-100">XP Earned</span>
-                </div>
-                <div className="text-2xl font-bold text-yellow-400">
-                  +{challenge.reward}
-                </div>
-              </div>
-
-              {/* Quizzes Completed */}
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <div className="flex items-center gap-2 mb-1">
-                  <Target className="w-4 h-4 text-green-400" />
-                  <span className="text-xs text-primary-100">Completed</span>
-                </div>
-                <div className="text-2xl font-bold text-white">
-                  {progress.completedQuizzes}/{progress.totalQuizzes}
-                </div>
-              </div>
-
-              {/* Achievement Badge */}
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <div className="flex items-center gap-2 mb-1">
-                  <Award className="w-4 h-4 text-purple-400" />
-                  <span className="text-xs text-primary-100">Grade</span>
-                </div>
-                <div className="text-2xl font-bold text-white">
-                  {isExcellent ? "A+" : isGood ? "A" : isPass ? "B" : "C"}
-                </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
         {/* Quiz Breakdown */}
-        <div className="lg:col-span-2">
-          <div className="card dark:bg-gray-800">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 md:p-8">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+              <div className="p-2.5 bg-primary-100 dark:bg-primary-900/40 rounded-xl">
                 <Zap className="w-5 h-5 text-primary-600 dark:text-primary-400" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Quiz Breakdown
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Detailed Breakdown
               </h2>
             </div>
+            
             <div className="space-y-4">
               {progress.quizAttempts.map((attempt, index) => {
-                const percentage =
-                  (attempt.score / attempt.totalQuestions) * 100;
                 const quiz = challenge.quizzes?.[index];
 
                 return (
                   <div
                     key={index}
-                    className="group relative p-5 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-all hover:shadow-lg"
+                    className="group relative p-4 md:p-5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700 hover:border-primary-200 dark:hover:border-primary-700/50 hover:bg-white dark:hover:bg-gray-800 transition-all hover:shadow-md"
                   >
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-3 sm:gap-0">
-                      <div className="flex-1 w-full">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary-600 text-white text-xs font-bold">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start gap-2.5 mb-1.5">
+                          <span className="flex-shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 text-xs font-bold ring-2 ring-white dark:ring-gray-800 mt-0.5 opacity-90">
                             {index + 1}
                           </span>
-                          <div className="font-bold text-gray-900 dark:text-white">
+                          <h3 className="font-semibold text-gray-900 dark:text-white leading-tight">
                             {quiz?.quiz.title || "Quiz"}
-                          </div>
+                          </h3>
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 ml-8">
-                          {attempt.score} / {attempt.totalQuestions} correct •{" "}
-                          {quiz?.quiz.topic}
-                        </div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 ml-8.5 pl-0.5">
+                          {attempt.score}/{attempt.totalQuestions} correct • {quiz?.quiz.topic}
+                        </p>
                       </div>
-                      <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start w-full sm:w-auto ml-8 sm:ml-0">
-                        <div
-                          className={`text-3xl font-bold ${
-                            percentage >= 90
-                              ? "text-green-600 dark:text-green-400"
-                              : percentage >= 70
-                                ? "text-blue-600 dark:text-blue-400"
-                                : percentage >= 50
-                                  ? "text-yellow-600 dark:text-yellow-400"
-                                  : "text-red-600 dark:text-red-400"
-                          }`}
-                        >
-                          {Math.round(percentage)}%
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {percentage >= 90
-                            ? "Excellent"
-                            : percentage >= 70
-                              ? "Good"
-                              : percentage >= 50
-                                ? "Pass"
-                                : "Review"}
-                        </div>
+                      
+                      <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end ml-0 sm:ml-4 pl-8 sm:pl-0 border-t sm:border-0 border-gray-100 dark:border-gray-700 pt-3 sm:pt-0 mt-1 sm:mt-0">
+                        {/* Removed progress circle section as requested */}
                       </div>
-                    </div>
-                    <div className="relative w-full bg-gray-300 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
-                      <div
-                        className={`h-3 rounded-full transition-all duration-1000 ease-out ${
-                          percentage >= 90
-                            ? "bg-gradient-to-r from-green-500 to-emerald-500"
-                            : percentage >= 70
-                              ? "bg-gradient-to-r from-blue-500 to-indigo-500"
-                              : percentage >= 50
-                                ? "bg-gradient-to-r from-yellow-500 to-orange-500"
-                                : "bg-gradient-to-r from-red-500 to-pink-500"
-                        }`}
-                        style={{ width: `${percentage}%` }}
-                      ></div>
                     </div>
                   </div>
                 );
@@ -333,14 +361,14 @@ export const ChallengeResultsPage = () => {
 
         {/* Actions Sidebar */}
         <div className="space-y-4">
-          <div className="card dark:bg-gray-800">
-            <h3 className="font-bold text-gray-900 dark:text-white mb-4 text-lg">
-              Actions
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
+            <h3 className="font-bold text-gray-900 dark:text-white mb-4 text-base uppercase tracking-wider opacity-80">
+              Next Steps
             </h3>
             <div className="space-y-3">
               <button
                 onClick={() => navigate("/challenges")}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-primary-600/20 active:scale-[0.98]"
               >
                 <ArrowLeft className="w-5 h-5" />
                 Back to Challenges
@@ -348,26 +376,18 @@ export const ChallengeResultsPage = () => {
 
               <button
                 onClick={() => navigate("/leaderboard")}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 hover:from-yellow-100 hover:to-orange-100 dark:hover:from-yellow-900/30 dark:hover:to-orange-900/30 text-gray-900 dark:text-white font-semibold rounded-xl transition-all border-2 border-yellow-200 dark:border-yellow-800"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold rounded-xl border border-gray-200 dark:border-gray-600 transition-all hover:border-gray-300"
               >
-                <TrendingUp className="w-5 h-5" />
-                View Leaderboard
+                <TrendingUp className="w-5 h-5 text-blue-500" />
+                Valid Leaderboard
               </button>
 
               <button
                 onClick={() => navigate("/attempts")}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold rounded-xl transition-all"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold rounded-xl border border-gray-200 dark:border-gray-600 transition-all hover:border-gray-300"
               >
-                <Eye className="w-5 h-5" />
-                Review Attempts
-              </button>
-
-              <button
-                onClick={handleShare}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold rounded-xl transition-all"
-              >
-                <Share2 className="w-5 h-5" />
-                Share Results
+                <Eye className="w-5 h-5 text-primary-500" />
+                Review Answers
               </button>
             </div>
           </div>
