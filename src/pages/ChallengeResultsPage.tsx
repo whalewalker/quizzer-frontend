@@ -28,7 +28,6 @@ const SCORE_THRESHOLDS = {
   PASS: 50,
 } as const;
 
-const CIRCLE_CIRCUMFERENCE = 280;
 const TOP_LEADERBOARD_COUNT = 10;
 
 // Helper functions
