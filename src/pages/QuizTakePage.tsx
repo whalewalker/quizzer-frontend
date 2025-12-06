@@ -18,7 +18,7 @@ import { QuizReview } from "../components/quiz/QuizReview";
 import { useQuiz } from "../hooks";
 
 export const QuizTakePage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id, attemptId } = useParams<{ id: string; attemptId?: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
@@ -44,9 +44,63 @@ export const QuizTakePage = () => {
     navigate("/quiz");
   }
 
-  // Restore state from localStorage when quiz loads
+  // Effect to load attempt for review if attemptId is present
   useEffect(() => {
-    if (!quiz || !id) return;
+    if (attemptId && quiz) {
+      const loadAttempt = async () => {
+        try {
+          const attempt = await quizService.getAttemptById(attemptId);
+
+          // Reconstruct result object
+          const score = attempt.score ?? 0;
+          const totalQuestions = attempt.totalQuestions ?? 0;
+
+          const mockResult: QuizResult = {
+            attemptId: attempt.id,
+            score: score,
+            totalQuestions: totalQuestions,
+            percentage:
+              totalQuestions > 0
+                ? Math.round((score / totalQuestions) * 100)
+                : 0,
+            correctAnswers: quiz.questions.map((q) => q.correctAnswer),
+            feedback: { message: "Reviewing past attempt" }, // Simplified feedback
+          };
+
+          setResult(mockResult);
+
+          // Parse answers if they are stored as JSON strings in the attempt
+          // Ensure your backend returns 'answers' field. If not, we might need to update backend or ignore user answers in review.
+          // Assuming attempt.answers is available and matches format.
+          // If answers are NOT in the fetch, we can't show user selections, only correct ones.
+          // For now, let's assume we can treat it as nulls if missing, preventing errors.
+          if ((attempt as any).answers) {
+            const answers = (attempt as any).answers;
+            // If answer is string/json, parse it
+            if (typeof answers === "string") {
+              try {
+                setSelectedAnswers(JSON.parse(answers));
+              } catch {
+                // ignore
+              }
+            } else if (Array.isArray(answers)) {
+              setSelectedAnswers(answers);
+            }
+          }
+
+          setShowResults(true);
+        } catch (_error) {
+          toast.error("Failed to load attempt details");
+        }
+      };
+
+      loadAttempt();
+    }
+  }, [attemptId, quiz]);
+
+  // Restore state from localStorage when quiz loads (only if NOT reviewing)
+  useEffect(() => {
+    if (!quiz || !id || attemptId) return;
 
     // Try to restore saved state from localStorage
     const savedAnswers = localStorage.getItem(getStorageKey("answers"));
@@ -96,7 +150,7 @@ export const QuizTakePage = () => {
         setTimeRemaining(quiz.timeLimit);
       }
     }
-  }, [quiz, id]);
+  }, [quiz, id, attemptId]);
 
   // Timer effect for timed quizzes
   useEffect(() => {
@@ -122,8 +176,6 @@ export const QuizTakePage = () => {
 
     return () => clearInterval(timer);
   }, [timeRemaining, showResults]);
-
-
 
   const handleAnswerSelect = (answer: AnswerValue) => {
     const newAnswers = [...selectedAnswers];
@@ -160,13 +212,11 @@ export const QuizTakePage = () => {
 
     setSubmitting(true);
     try {
-      const { result: submissionResult } =
-        await quizService.submit(id, {
-          answers: selectedAnswers as AnswerValue[],
-          challengeId: challengeId || undefined,
-        });
+      const { result: submissionResult } = await quizService.submit(id, {
+        answers: selectedAnswers as AnswerValue[],
+        challengeId: challengeId || undefined,
+      });
       setResult(submissionResult);
-
 
       // Clear saved state from localStorage after submission
       localStorage.removeItem(getStorageKey("answers"));
@@ -335,8 +385,6 @@ export const QuizTakePage = () => {
             </div>
           </div>
         </div>
-
-
 
         {/* Continue to Next Quiz button for challenges */}
         {challengeId && challengeResult && !challengeResult.completed && (
@@ -523,7 +571,7 @@ export const QuizTakePage = () => {
               className="flex items-center gap-1 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-all shadow-md hover:shadow-lg touch-manipulation text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? (
-                 <>
+                <>
                   <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin flex-shrink-0" />
                   <span>Submitting...</span>
                 </>

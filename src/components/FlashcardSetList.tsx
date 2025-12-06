@@ -8,16 +8,19 @@ import {
   BookOpen,
   CheckCircle2,
   Trash2,
+  Plus,
 } from "lucide-react";
 
 interface FlashcardSetListProps {
   sets: FlashcardSet[];
   onDelete?: (id: string) => void;
+  onCreateNew?: () => void;
 }
 
 export const FlashcardSetList: React.FC<FlashcardSetListProps> = ({
   sets,
   onDelete,
+  onCreateNew,
 }) => {
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.preventDefault(); // Prevent navigation
@@ -39,9 +42,13 @@ export const FlashcardSetList: React.FC<FlashcardSetListProps> = ({
         <p className="text-gray-500 mb-6">
           Generate your first flashcard set to get started!
         </p>
-        <div className="inline-flex items-center gap-2 text-sm text-emerald-600">
-          <span>Click "New Set" above to begin</span>
-        </div>
+        <button
+          onClick={onCreateNew}
+          className="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+        >
+          <Plus className="w-4 h-4" />
+          Create New Set
+        </button>
       </div>
     );
   }

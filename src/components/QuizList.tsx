@@ -7,14 +7,20 @@ import {
   Play,
   CheckCircle2,
   Trash2,
+  Plus,
 } from "lucide-react";
 
 interface QuizListProps {
   quizzes: Quiz[];
   onDelete?: (id: string) => void;
+  onCreateNew?: () => void;
 }
 
-export const QuizList: React.FC<QuizListProps> = ({ quizzes, onDelete }) => {
+export const QuizList: React.FC<QuizListProps> = ({
+  quizzes,
+  onDelete,
+  onCreateNew,
+}) => {
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.preventDefault(); // Prevent navigation
     e.stopPropagation();
@@ -35,9 +41,13 @@ export const QuizList: React.FC<QuizListProps> = ({ quizzes, onDelete }) => {
         <p className="text-gray-500 mb-6">
           Generate your first quiz to get started!
         </p>
-        <div className="inline-flex items-center gap-2 text-sm text-blue-600">
-          <span>Click "New Quiz" above to begin</span>
-        </div>
+        <button
+          onClick={onCreateNew}
+          className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+        >
+          <Plus className="w-4 h-4" />
+          Create New Quiz
+        </button>
       </div>
     );
   }

@@ -56,7 +56,7 @@ export const SchoolSearch = ({
       }
     };
 
-    const debounce = setTimeout(searchSchools, 500);
+    const debounce = setTimeout(searchSchools, 300); // Faster response (300ms)
     return () => clearTimeout(debounce);
   }, [query]);
 
@@ -90,7 +90,7 @@ export const SchoolSearch = ({
       </div>
 
       {isOpen && (query.length >= 2 || results.length > 0) && (
-        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-80 overflow-y-auto">
           {results.length > 0 ? (
             <ul className="py-1">
               {results.map((school) => (

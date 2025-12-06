@@ -57,8 +57,8 @@ export function AttemptsPage() {
   // Sync filter type with URL params or Route params
   useEffect(() => {
     if (routeChallengeId) {
-        setFilterType("challenge");
-        return;
+      setFilterType("challenge");
+      return;
     }
 
     if (

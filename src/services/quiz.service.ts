@@ -2,6 +2,7 @@ import { apiClient } from "./api";
 import { QUIZ_ENDPOINTS } from "../config/api";
 import type {
   Quiz,
+  Attempt,
   QuizGenerateRequest,
   QuizSubmission,
   QuizResult,
@@ -71,6 +72,24 @@ export const quizService = {
   // Check job status
   getJobStatus: async (jobId: string): Promise<JobStatus> => {
     const response = await apiClient.get<JobStatus>(`/quiz/status/${jobId}`);
+    return response.data;
+  },
+
+  async getAttemptById(attemptId: string): Promise<Attempt> {
+    const response = await apiClient.get<Attempt>(`/quiz/attempt/${attemptId}`);
+    return response.data;
+  },
+
+  async getAllAttempts(params?: {
+    quizId?: string;
+    flashcardSetId?: string;
+    challengeId?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<Attempt[]> {
+    const response = await apiClient.get<Attempt[]>(`/quiz/attempts`, {
+      params,
+    });
     return response.data;
   },
 

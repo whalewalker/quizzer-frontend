@@ -325,7 +325,11 @@ export const QuizPage = () => {
             <CardSkeleton count={6} />
           </div>
         ) : (
-          <QuizList quizzes={quizzes} onDelete={handleDelete} />
+          <QuizList
+            quizzes={quizzes}
+            onDelete={handleDelete}
+            onCreateNew={() => setShowGenerator(true)}
+          />
         ))}
 
       <Modal

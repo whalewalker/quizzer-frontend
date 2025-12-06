@@ -24,7 +24,7 @@ export const authService = {
   signup: async (
     email: string,
     password: string,
-    name: string
+    name: string,
   ): Promise<User> => {
     const response = await apiClient.post<{
       user: User;
@@ -45,7 +45,7 @@ export const authService = {
   // Detect if device is mobile
   isMobileDevice: (): boolean => {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
+      navigator.userAgent,
     );
   },
 
@@ -53,7 +53,7 @@ export const authService = {
   googleSignIn: async (idToken: string): Promise<User> => {
     const response = await apiClient.post<{ user: User; accessToken: string }>(
       AUTH_ENDPOINTS.GOOGLE_LOGIN,
-      { idToken }
+      { idToken },
     );
 
     // Save user data and token to localStorage for persistence

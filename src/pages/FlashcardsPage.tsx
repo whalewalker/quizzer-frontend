@@ -313,7 +313,11 @@ export const FlashcardsPage = () => {
             <CardSkeleton count={6} />
           </div>
         ) : (
-          <FlashcardSetList sets={flashcardSets} onDelete={handleDelete} />
+          <FlashcardSetList
+            sets={flashcardSets}
+            onDelete={handleDelete}
+            onCreateNew={() => setShowGenerator(true)}
+          />
         ))}
 
       <Modal

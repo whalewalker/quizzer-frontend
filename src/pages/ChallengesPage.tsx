@@ -259,8 +259,8 @@ export const ChallengesPage = () => {
                                   isCompleted
                                     ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
                                     : isJoined
-                                    ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                                    : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+                                      ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                                      : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
                                 }`}
                               >
                                 {isCompleted ? (
@@ -272,11 +272,12 @@ export const ChallengesPage = () => {
                               <div>
                                 <h3 className="font-bold text-lg text-gray-900 dark:text-white leading-tight flex items-center gap-2">
                                   {challenge.title}
-                                  {challenge.format && challenge.format !== "STANDARD" && (
-                                    <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded text-[10px] font-bold uppercase tracking-wider">
-                                      {challenge.format}
-                                    </span>
-                                  )}
+                                  {challenge.format &&
+                                    challenge.format !== "STANDARD" && (
+                                      <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded text-[10px] font-bold uppercase tracking-wider">
+                                        {challenge.format}
+                                      </span>
+                                    )}
                                 </h3>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">
                                   {challenge.description}
@@ -286,17 +287,30 @@ export const ChallengesPage = () => {
 
                             {/* Meta Info Grid */}
                             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600 dark:text-gray-400 pt-1">
-                              <div className="flex items-center gap-1.5" title="Reward">
+                              <div
+                                className="flex items-center gap-1.5"
+                                title="Reward"
+                              >
                                 <Trophy className="w-4 h-4 text-yellow-500" />
-                                <span className="font-semibold">{challenge.reward} XP</span>
-                              </div>
-                              <div className="flex items-center gap-1.5" title="Time Limit">
-                                <Clock className="w-4 h-4 text-blue-500" />
-                                <span className="font-medium">
-                                  {challenge.timeLimit ? `${Math.round(challenge.timeLimit / 60)}m` : "No Limit"}
+                                <span className="font-semibold">
+                                  {challenge.reward} XP
                                 </span>
                               </div>
-                              <div className="flex items-center gap-1.5" title="Participants">
+                              <div
+                                className="flex items-center gap-1.5"
+                                title="Time Limit"
+                              >
+                                <Clock className="w-4 h-4 text-blue-500" />
+                                <span className="font-medium">
+                                  {challenge.timeLimit
+                                    ? `${Math.round(challenge.timeLimit / 60)}m`
+                                    : "No Limit"}
+                                </span>
+                              </div>
+                              <div
+                                className="flex items-center gap-1.5"
+                                title="Participants"
+                              >
                                 <Users className="w-4 h-4 text-purple-500" />
                                 <span className="font-medium">
                                   {challenge.participantCount || 0}
@@ -312,70 +326,120 @@ export const ChallengesPage = () => {
                             {isJoined && !isCompleted && (
                               <div className="flex items-center gap-2">
                                 <div className="relative w-12 h-12">
-                                   <svg className="w-full h-full transform -rotate-90">
-                                      <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" className="text-gray-100 dark:text-gray-700" />
-                                      <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray={126} strokeDashoffset={126 - (126 * percentage) / 100} className="text-blue-500" strokeLinecap="round" />
-                                   </svg>
-                                   <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-400">
-                                     {Math.round(percentage)}%
-                                   </div>
+                                  <svg className="w-full h-full transform -rotate-90">
+                                    <circle
+                                      cx="24"
+                                      cy="24"
+                                      r="20"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                      className="text-gray-100 dark:text-gray-700"
+                                    />
+                                    <circle
+                                      cx="24"
+                                      cy="24"
+                                      r="20"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                      strokeDasharray={126}
+                                      strokeDashoffset={
+                                        126 - (126 * percentage) / 100
+                                      }
+                                      className="text-blue-500"
+                                      strokeLinecap="round"
+                                    />
+                                  </svg>
+                                  <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-400">
+                                    {Math.round(percentage)}%
+                                  </div>
                                 </div>
                               </div>
                             )}
 
                             <div className="flex items-center gap-2">
-                               {/* Action Buttons */}
-                               {!isCompleted && !isJoined && (
-                                  <button
-                                    onClick={() => handleJoinChallenge(challenge.id)}
-                                    disabled={joiningChallengeId === challenge.id}
-                                    className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                                  >
-                                    {joiningChallengeId === challenge.id ? "Joining..." : "Join Challenge"}
-                                  </button>
-                               )}
+                              {/* Action Buttons */}
+                              {!isCompleted && !isJoined && (
+                                <button
+                                  onClick={() =>
+                                    handleJoinChallenge(challenge.id)
+                                  }
+                                  disabled={joiningChallengeId === challenge.id}
+                                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                >
+                                  {joiningChallengeId === challenge.id
+                                    ? "Joining..."
+                                    : "Join Challenge"}
+                                </button>
+                              )}
 
-                               {isJoined && !isCompleted && challenge.progress > 0 && (
+                              {isJoined &&
+                                !isCompleted &&
+                                challenge.progress > 0 && (
                                   <button
-                                    onClick={() => navigate(`/challenges/${challenge.id}`)}
+                                    onClick={() =>
+                                      navigate(`/challenges/${challenge.id}`)
+                                    }
                                     className="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-lg shadow-sm hover:shadow transition-all whitespace-nowrap"
                                   >
                                     Continue
                                   </button>
-                               )}
+                                )}
 
-                                {isJoined && !isCompleted && challenge.progress === 0 && (
+                              {isJoined && isCompleted && (
+                                <button
+                                  onClick={() =>
+                                    navigate(
+                                      `/challenges/${challenge.id}/results`,
+                                    )
+                                  }
+                                  className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-lg shadow-sm hover:shadow transition-all whitespace-nowrap"
+                                >
+                                  View Results
+                                </button>
+                              )}
+
+                              {isJoined &&
+                                !isCompleted &&
+                                challenge.progress === 0 && (
                                   <div className="flex gap-2">
                                     <button
-                                      onClick={() => handleLeaveChallenge(challenge.id)}
+                                      onClick={() =>
+                                        handleLeaveChallenge(challenge.id)
+                                      }
                                       className="px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-semibold rounded-lg transition-colors"
                                     >
                                       Leave
                                     </button>
                                     <button
-                                      onClick={() => navigate(`/challenges/${challenge.id}`)}
+                                      onClick={() =>
+                                        navigate(`/challenges/${challenge.id}`)
+                                      }
                                       className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-sm hover:shadow transition-all whitespace-nowrap"
                                     >
                                       Start
                                     </button>
                                   </div>
                                 )}
-                                
-                                {isCompleted && (
-                                   <span className="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm font-bold rounded-lg">
-                                     Completed
-                                   </span>
-                                )}
+
+                              {isCompleted && (
+                                <span className="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm font-bold rounded-lg">
+                                  Completed
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
 
                         {/* Bottom Capacity Bar */}
                         <div className="mt-5 w-full bg-gray-100 dark:bg-gray-700 h-1.5">
-                           <div 
-                              className="h-full bg-blue-500/50 dark:bg-blue-400/50 rounded-r-full" 
-                              style={{ width: `${Math.min(((challenge.participantCount || 0) / (challenge.maxParticipants || 100)) * 100, 100)}%` }}
-                           />
+                          <div
+                            className="h-full bg-blue-500/50 dark:bg-blue-400/50 rounded-r-full"
+                            style={{
+                              width: `${Math.min(((challenge.participantCount || 0) / (challenge.maxParticipants || 100)) * 100, 100)}%`,
+                            }}
+                          />
                         </div>
                       </div>
                     </div>
@@ -523,5 +587,3 @@ export const ChallengesPage = () => {
     </div>
   );
 };
-
-

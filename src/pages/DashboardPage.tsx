@@ -385,7 +385,7 @@ export const DashboardPage = () => {
                         attempt.flashcardSet?.id
                       ) {
                         navigate(
-                          `/attempts?flashcardId=${attempt.flashcardSet.id}`
+                          `/attempts?flashcardId=${attempt.flashcardSet.id}`,
                         );
                       }
                     }}
@@ -399,11 +399,12 @@ export const DashboardPage = () => {
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                         <span className="hidden sm:inline">
-                          {attempt.type === "quiz" ? "Quiz" : "Flashcards"} •{" "}
+                          {attempt.type === "quiz" ? "Quiz" : "Flashcards"}{" "}
+                          •{" "}
                         </span>
                         {new Date(attempt.completedAt).toLocaleDateString(
                           undefined,
-                          { month: "short", day: "numeric" }
+                          { month: "short", day: "numeric" },
                         )}
                       </p>
                     </div>
@@ -414,12 +415,12 @@ export const DashboardPage = () => {
                             attempt.score / attempt.totalQuestions >= 0.7
                               ? "text-green-600 dark:text-green-400"
                               : attempt.score / attempt.totalQuestions >= 0.5
-                              ? "text-yellow-600 dark:text-yellow-400"
-                              : "text-red-600 dark:text-red-400"
+                                ? "text-yellow-600 dark:text-yellow-400"
+                                : "text-red-600 dark:text-red-400"
                           }`}
                         >
                           {Math.round(
-                            (attempt.score / attempt.totalQuestions) * 100
+                            (attempt.score / attempt.totalQuestions) * 100,
                           )}
                           %
                         </span>
@@ -477,7 +478,7 @@ export const DashboardPage = () => {
                           studyInsights.retentionDistribution.REINFORCEMENT +
                           studyInsights.retentionDistribution.RECALL +
                           studyInsights.retentionDistribution.MASTERY || 1)) *
-                        100
+                        100,
                     )}
                     %
                   </span>
